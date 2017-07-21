@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:meta/meta.dart';
 import 'package:postgresql/postgresql.dart' show Row;
 import 'package:postgresql/pool.dart' show Pool;
+import '../entity/session.dart';
 import '../entity/user.dart';
 
 User _assembleUser(Row row) =>
@@ -13,11 +14,10 @@ class UserRepository {
   Future<User> getUser(int userId) async {
     final connection = await _postgresConnectionPool.connect();
     final row = await connection.query('select id, username, email, name, profile_image_url from users where id = @id limit 1;').single;
-    final user = _assembleUser(row);
 
     connection.close();
 
-    return user;
+    return _assembleUser(row);
   }
 
   Future<User> createOrUpdate(User user) async {
@@ -36,11 +36,23 @@ class UserRepository {
     );
 
     final row = await connection.query('select id, username, email, name, profile_image_url from users where id = @id limit 1;').single;
-    final createdUser = _assembleUser(row);
 
     connection.close();
 
-    return createdUser;
+    return _assembleUser(row);
+  }
+
+  Future<User> getUserBySession(Session session) async {
+    final connection = await _postgresConnectionPool.connect();
+
+    final row = await connection.query('select users.id, username, email, name, profile_image_url from users join sessions on sessions.user_id = users.id where sessions.token = @token;', {
+      'token': session.token,
+    })
+      .single;
+    
+    connection.close();
+
+    return _assembleUser(row);
   }
 
   UserRepository({@required Pool postgresConnectionPool}):

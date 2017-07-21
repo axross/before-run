@@ -1,8 +1,11 @@
 import 'dart:async' show Future;
-import 'dart:io' show HttpRequest;
+import 'dart:convert' show JSON;
+import 'dart:io' show ContentType, HttpRequest;
 import 'package:meta/meta.dart';
-import '../entity/uuid.dart' show Uuid;
+import '../entity/session.dart';
+import '../entity/uuid.dart';
 import '../repository/github_access_token_repository.dart';
+import '../repository/session_repository.dart';
 import '../repository/user_github_repository.dart';
 import '../repository/user_repository.dart';
 
@@ -10,6 +13,7 @@ class AuthenticationHandler {
   final String githubOauthClientId;
   final Uri githubOauthCallbackUrl;
   final GithubAccessTokenRepository githubAccessTokenRepository;
+  final SessionRepository sessionRepository;
   final UserGithubRepository userGithubRepository;
   final UserRepository userRepository;
 
@@ -31,16 +35,20 @@ class AuthenticationHandler {
     final accessToken = await githubAccessTokenRepository.getAccessToken(code);
     final user = await userGithubRepository.getUser(accessToken);
     final createdUser = await userRepository.createOrUpdate(user);
+    final session = await sessionRepository.createSession(createdUser);
 
-    print(createdUser);
-
-    request.response.redirect(new Uri.http('localhost:8000', '/'));
+    request.response
+      ..statusCode = 200
+      ..headers.contentType = ContentType.JSON
+      ..write(JSON.encode({ 'token': session.token }))
+      ..close();
   }
 
   AuthenticationHandler({
     @required this.githubOauthClientId,
     @required this.githubOauthCallbackUrl,
     @required this.githubAccessTokenRepository,
+    @required this.sessionRepository,
     @required this.userGithubRepository,
     @required this.userRepository,
   });

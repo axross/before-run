@@ -16,4 +16,7 @@ class Uuid {
 
   Uuid.v5(String value):
     buffer = new DartUuid.Uuid().v5(DartUuid.Uuid.NAMESPACE_NIL, value, buffer: new List(16));
+
+  Uuid.fromString(String string):
+    buffer = new DartUuid.Uuid().parse(string);
 }

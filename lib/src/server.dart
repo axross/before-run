@@ -4,9 +4,12 @@ import 'package:postgresql/pool.dart';
 import 'package:route/server.dart';
 import 'package:meta/meta.dart';
 import './handler/authentication_handler.dart';
+import './handler/user_handler.dart';
 import './repository/github_access_token_repository.dart';
+import './repository/session_repository.dart';
 import './repository/user_github_repository.dart';
 import './repository/user_repository.dart';
+import './service/authentication_service.dart';
 
 Future<dynamic> startHttpServer({
   @required InternetAddress serverAddress,
@@ -28,24 +31,36 @@ Future<dynamic> startHttpServer({
     oauthClientId: githubOauthClientId,
     oauthClientSecret: githubOauthClientSecret,
   );
+  final sessionRepository = new SessionRepository(
+    postgresConnectionPool: postgresConnectionPool,
+  );
   final userGithubRepository = new UserGithubRepository();
   final userRepository = new UserRepository(
     postgresConnectionPool: postgresConnectionPool,
+  );
+
+  final authenticationService = new AuthenticationService(
+    userRepository: userRepository,
+    sessionRepository: sessionRepository,
   );
 
   final authenticationHandler = new AuthenticationHandler(
     githubOauthClientId: githubOauthClientId,
     githubOauthCallbackUrl: new Uri.http('localhost:8000', '/authentication/callback'),
     githubAccessTokenRepository: githubAccessTokenRepository,
+    sessionRepository: sessionRepository,
     userGithubRepository: userGithubRepository,
     userRepository: userRepository,
   );
+  final userHandler = new UserHandler(authenticationService: authenticationService);
 
   router
     ..serve(new UrlPattern(r'/authentication'), method: 'GET')
       .listen(authenticationHandler.authenticateUser)
     ..serve(new UrlPattern(r'/authentication/callback'), method: 'GET')
-      .listen(authenticationHandler.receiveOauthCallback);
+      .listen(authenticationHandler.receiveOauthCallback)
+    ..serve(new UrlPattern(r'/users/me'), method: 'GET')
+      .listen(userHandler.getMe);
   
   await postgresConnectionPool.start();
 }
