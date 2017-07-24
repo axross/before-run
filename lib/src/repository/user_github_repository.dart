@@ -1,8 +1,8 @@
 import 'dart:async' show Future;
 import 'dart:convert' show JSON;
 import 'package:http/http.dart' show get;
-import 'package:angel_validate/angel_validate.dart';
 import '../entity/user.dart' show User;
+import '../utility/validate.dart';
 
 final Validator _userValidator = new Validator({
   'id': [isNotNull, isPositive],
@@ -14,7 +14,7 @@ final Validator _userValidator = new Validator({
 
 User _decodeToUser(String json) {
   final object = JSON.decode(json);
-  final validated = _userValidator.enforce(object);
+  final validated = _userValidator.validate(object);
 
   return new User(
     id: validated['id'],

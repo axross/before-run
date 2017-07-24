@@ -6,8 +6,7 @@ import '../repository/github_access_token_repository.dart';
 import '../repository/session_repository.dart';
 import '../repository/user_github_repository.dart';
 import '../repository/user_repository.dart';
-import '../utility/respondPayload.dart';
-import '../utility/respondException.dart';
+import '../utility/respond.dart';
 
 class AuthenticationHandler {
   final String _githubOauthClientId;
@@ -30,7 +29,7 @@ class AuthenticationHandler {
 
       await _sessionRepository.deleteSession(token);
 
-      respondPayload(request, {});
+      respondAsJson(request, {});
     } on SessionNotFoundException catch (err, st) {
       print(err);
       print(st);
@@ -50,7 +49,7 @@ class AuthenticationHandler {
     final createdUser = await _userRepository.createOrUpdate(user);
     final session = await _sessionRepository.createSession(createdUser);
 
-    respondPayload(request, { 'token': session.token });
+    respondAsJson(request, { 'token': session.token });
   }
 
   AuthenticationHandler({

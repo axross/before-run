@@ -5,7 +5,7 @@ import '../entity/user.dart';
 import '../repository/session_repository.dart';
 import '../repository/user_repository.dart';
 
-final _headerValueRegExp = new RegExp(r'^token [a-z0-9]{64}$', caseSensitive: false);
+final RegExp _headerValueRegExp = new RegExp(r'^token [a-z0-9]{64}$');
 
 class AuthenticationException implements Exception {
   final String message;
@@ -21,7 +21,7 @@ class AuthenticationService {
 
   Future<User> authenticate(HttpRequest request) async {
     final headerValue = request.headers.value('authorization');
-    final isValid = _headerValueRegExp.hasMatch(headerValue);
+    final isValid = headerValue is String && _headerValueRegExp.hasMatch(headerValue);
 
     if (!isValid) {
       throw new AuthenticationException('This API endpoint needs authentication. Call with `authorization: token xxx...`.');

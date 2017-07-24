@@ -13,8 +13,8 @@ class UserNotFoundException implements Exception {
   final String token;
 
   String toString() => id != null
-    ? 'User (id: "$id") is not found.'
-    : 'User (authentication token: "$token") is not found.';
+    ? 'An user (id: "$id") is not found.'
+    : 'An user (authentication token: "$token") is not found.';
   
   UserNotFoundException({this.id, this.token}) {
     assert(id != null || token != null);
@@ -57,9 +57,6 @@ class UserRepository {
 
   Future<User> getUserBySession(Session session) async {
     final connection = await _postgresConnectionPool.connect();
-
-    print(session.token);
-
     final rows = await connection.query(
       'select users.id as id, username, email, name, profile_image_url from sessions inner join users on sessions.user_id = users.id where sessions.token = @token limit 1;',
       {

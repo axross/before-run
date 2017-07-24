@@ -3,8 +3,10 @@ import 'dart:io' show HttpServer, InternetAddress;
 import 'package:postgresql/pool.dart';
 import 'package:route/server.dart';
 import 'package:meta/meta.dart';
+import './handler/application_handler.dart';
 import './handler/authentication_handler.dart';
 import './handler/user_handler.dart';
+import './repository/application_repository.dart';
 import './repository/github_access_token_repository.dart';
 import './repository/session_repository.dart';
 import './repository/user_github_repository.dart';
@@ -28,6 +30,9 @@ Future<dynamic> startHttpServer({
   );
 
   // repositories
+  final applicationRepository = new ApplicationRepository(
+    postgresConnectionPool: postgresConnectionPool,
+  );
   final githubAccessTokenRepository = new GithubAccessTokenRepository(
     oauthClientId: githubOauthClientId,
     oauthClientSecret: githubOauthClientSecret,
@@ -47,6 +52,10 @@ Future<dynamic> startHttpServer({
   );
 
   // request handlers
+  final applicationHandler = new ApplicationHandler(
+    applicationRepository: applicationRepository,
+    authenticationService: authenticationService,
+  );
   final authenticationHandler = new AuthenticationHandler(
     githubOauthClientId: githubOauthClientId,
     githubAccessTokenRepository: githubAccessTokenRepository,
@@ -64,7 +73,9 @@ Future<dynamic> startHttpServer({
     ..serve(new UrlPattern(r'/sessions/callback'), method: 'GET')
       .listen(authenticationHandler.receiveOauthCallback)
     ..serve(new UrlPattern(r'/users/me'), method: 'GET')
-      .listen(userHandler.getMe);
+      .listen(userHandler.getMe)
+    ..serve(new UrlPattern(r'/applications'), method: 'POST')
+      .listen(applicationHandler.createApplication);
   
   await postgresConnectionPool.start();
 }

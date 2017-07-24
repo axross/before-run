@@ -1,7 +1,7 @@
-import 'dart:convert';
+import 'dart:convert' show JSON;
 import 'dart:io' show ContentType, HttpRequest;
 
-void respondPayload(HttpRequest request, dynamic payload) {
+void respondAsJson(HttpRequest request, dynamic payload) {
   try {
     final json = payload is String
       ? payload
@@ -21,4 +21,12 @@ void respondPayload(HttpRequest request, dynamic payload) {
 
     rethrow;
   }
+}
+
+void respondException(HttpRequest request, Exception exception, {int statusCode = 400, String message}) {
+  request.response
+    ..statusCode = statusCode
+    ..headers.contentType = ContentType.TEXT
+    ..write(message != null ? message : exception.toString())
+    ..close();
 }

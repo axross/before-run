@@ -20,7 +20,6 @@ class SessionRepository {
 
   Future<Session> getSessionByToken(String token) async {
     final connection = await _postgresConnectionPool.connect();
-
     final rows = await connection.query('select token from sessions where token = @token limit 1;', {
       'token': token,
     }).toList();
@@ -35,7 +34,6 @@ class SessionRepository {
   Future<Session> createSession(User user) async {
     final temporarySession = new Session.generateWithUser(user);
     final connection = await _postgresConnectionPool.connect();
-
     final row = await connection.query('insert into sessions (token, user_id, created_at) values (@token, @userId, @now) returning token;', {
       'token': temporarySession.token,
       'userId': user.id,
@@ -49,7 +47,6 @@ class SessionRepository {
 
   Future<dynamic> deleteSession(String token) async {
     final connection = await _postgresConnectionPool.connect();
-
     final affectedRows = await connection.execute('delete from sessions where token = @token;', {
       'token': token,
     });

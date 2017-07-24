@@ -4,10 +4,9 @@ import 'dart:io' show HttpRequest;
 import 'package:meta/meta.dart';
 import '../entity/user.dart';
 import '../service/authentication_service.dart';
-import '../utility/respondException.dart';
-import '../utility/respondPayload.dart';
+import '../utility/respond.dart';
 
-String encodeUser(User user) => JSON.encode({
+String _serializeUser(User user) => JSON.encode({
   'id': user.id,
   'username': user.username,
   'email': user.email,
@@ -22,7 +21,7 @@ class UserHandler {
     try {
       final user = await _authenticationService.authenticate(request);
 
-      respondPayload(request, encodeUser(user));
+      respondAsJson(request, _serializeUser(user));
     } on AuthenticationException catch (err, st) {
       print(err);
       print(st);
