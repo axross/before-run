@@ -12,13 +12,13 @@ import './repository/user_repository.dart';
 import './service/authentication_service.dart';
 
 Future<dynamic> startHttpServer({
-  @required InternetAddress serverAddress,
-  @required int sereverPort,
+  @required InternetAddress selfAddress,
+  @required int selfPort,
   @required Uri postgresUri,
   @required String githubOauthClientId,
   @required String githubOauthClientSecret,
 }) async {
-  final httpServer = await HttpServer.bind(serverAddress, sereverPort);
+  final httpServer = await HttpServer.bind(selfAddress, selfPort);
   final router = new Router(httpServer);
 
   final postgresConnectionPool = new Pool(
@@ -27,6 +27,7 @@ Future<dynamic> startHttpServer({
     maxConnections: 5,
   );
 
+  // repositories
   final githubAccessTokenRepository = new GithubAccessTokenRepository(
     oauthClientId: githubOauthClientId,
     oauthClientSecret: githubOauthClientSecret,
@@ -39,14 +40,15 @@ Future<dynamic> startHttpServer({
     postgresConnectionPool: postgresConnectionPool,
   );
 
+  // services
   final authenticationService = new AuthenticationService(
     userRepository: userRepository,
     sessionRepository: sessionRepository,
   );
 
+  // request handlers
   final authenticationHandler = new AuthenticationHandler(
     githubOauthClientId: githubOauthClientId,
-    githubOauthCallbackUrl: new Uri.http('localhost:8000', '/authentication/callback'),
     githubAccessTokenRepository: githubAccessTokenRepository,
     sessionRepository: sessionRepository,
     userGithubRepository: userGithubRepository,
@@ -55,9 +57,11 @@ Future<dynamic> startHttpServer({
   final userHandler = new UserHandler(authenticationService: authenticationService);
 
   router
-    ..serve(new UrlPattern(r'/authentication'), method: 'GET')
+    ..serve(new UrlPattern(r'/sessions'), method: 'GET')
       .listen(authenticationHandler.authenticateUser)
-    ..serve(new UrlPattern(r'/authentication/callback'), method: 'GET')
+    ..serve(new UrlPattern(r'/sessions/([a-f0-9]{64})'), method: 'DELETE')
+      .listen(authenticationHandler.revokeSession)
+    ..serve(new UrlPattern(r'/sessions/callback'), method: 'GET')
       .listen(authenticationHandler.receiveOauthCallback)
     ..serve(new UrlPattern(r'/users/me'), method: 'GET')
       .listen(userHandler.getMe);

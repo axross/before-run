@@ -23,17 +23,21 @@ class AuthenticationService {
     final headerValue = request.headers.value('authorization');
     final isValid = _headerValueRegExp.hasMatch(headerValue);
 
-    print(headerValue);
-    print(isValid);
-
     if (!isValid) {
       throw new AuthenticationException('This API endpoint needs authentication. Call with `authorization: token xxx...`.');
     }
 
     final token = headerValue.substring(6);
-    final session = await _sessionRepository.getSessionByToken(token);
 
-    return await _userRepository.getUserBySession(session);
+    try {
+      final session = await _sessionRepository.getSessionByToken(token);
+
+      return await _userRepository.getUserBySession(session);
+    } on SessionNotFoundException catch (_) {
+      throw new AuthenticationException('Authentication token `$token` is not a valid token.');
+    } on UserNotFoundException catch (_) {
+      throw new StateError('起こるはずがない');
+    }
   }
 
   AuthenticationService({

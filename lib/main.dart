@@ -4,8 +4,8 @@ import './src/server.dart' show startHttpServer;
 
 Future<dynamic> main() async {
   await startHttpServer(
-    serverAddress: InternetAddress.LOOPBACK_IP_V4,
-    sereverPort: 8000,
+    selfAddress: InternetAddress.LOOPBACK_IP_V4,
+    selfPort: 8000,
     postgresUri: new Uri(
       scheme: 'postgres',
       host: 'localhost',

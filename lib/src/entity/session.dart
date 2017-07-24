@@ -15,8 +15,8 @@ class Session {
     _firstPart = new Uuid.v5('${user.id}'),
     _lastPart = new Uuid.v4();
   Session.fromToken(String token):
-    _firstPart = new Uuid.fromString(token.substring(0, 16)),
-    _lastPart = new Uuid.fromString(token.substring(16)) {
+    _firstPart = new Uuid.fromString(token.substring(0, 32)),
+    _lastPart = new Uuid.fromString(token.substring(32)) {
       assert(token.length == 32);
     }
 }

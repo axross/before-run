@@ -8,6 +8,19 @@ import '../entity/user.dart';
 User _assembleUser(Row row) =>
   new User(id: row.id, username: row.username, email: row.email, name: row.name, profileImageUrl: row.profile_image_url);
 
+class UserNotFoundException implements Exception {
+  final int id;
+  final String token;
+
+  String toString() => id != null
+    ? 'User (id: "$id") is not found.'
+    : 'User (authentication token: "$token") is not found.';
+  
+  UserNotFoundException({this.id, this.token}) {
+    assert(id != null || token != null);
+  }
+}
+
 class UserRepository {
   final Pool _postgresConnectionPool;
 
@@ -45,14 +58,22 @@ class UserRepository {
   Future<User> getUserBySession(Session session) async {
     final connection = await _postgresConnectionPool.connect();
 
-    final row = await connection.query('select users.id, username, email, name, profile_image_url from users join sessions on sessions.user_id = users.id where sessions.token = @token;', {
-      'token': session.token,
-    })
-      .single;
-    
+    print(session.token);
+
+    final rows = await connection.query(
+      'select users.id as id, username, email, name, profile_image_url from sessions inner join users on sessions.user_id = users.id where sessions.token = @token limit 1;',
+      {
+        'token': session.token,
+      },
+    ).toList();
+
     connection.close();
 
-    return _assembleUser(row);
+    if (rows.length != 1) {
+      throw new UserNotFoundException(token: session.token);
+    }
+
+    return _assembleUser(rows[0]);
   }
 
   UserRepository({@required Pool postgresConnectionPool}):
