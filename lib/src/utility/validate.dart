@@ -1,27 +1,22 @@
-import 'package:angel_validate/angel_validate.dart' as angel;
-export 'package:angel_validate/angel_validate.dart';
+import 'package:matcher/matcher.dart';
+import '../exception/bad_request_exception.dart';
 
-class ValidationException implements Exception {
-  final List<String> errorMessages;
+export 'package:matcher/matcher.dart';
 
-  String toString() => errorMessages.join('\n');
+class ValidationException implements BadRequestException {
+  final String message;
 
-  ValidationException(this.errorMessages);
+  String toString() => message;
+
+  ValidationException(this.message);
 }
 
-class Validator {
-  final angel.Validator _validator;
-  
-  T validate<T extends Map<dynamic, dynamic>>(T input) {
-    final result = _validator.check(input);
+void validate(dynamic input, Matcher matcher, {String key = 'value'}) {
+  final isMatched = matcher.matches(input, {});
 
-    if (result.errors.length >= 1) {
-      throw new ValidationException(result.errors);
-    }
-
-    return result.data;
+  if (!isMatched) {
+    throw new ValidationException(matcher.describe(new StringDescription('$key must be: ')).toString());
   }
 
-  Validator(Map<String, dynamic> schema):
-    _validator = new angel.Validator(schema);
+  return input;
 }

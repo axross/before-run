@@ -75,7 +75,9 @@ Future<dynamic> startHttpServer({
     ..serve(new UrlPattern(r'/users/me'), method: 'GET')
       .listen(userHandler.getMe)
     ..serve(new UrlPattern(r'/applications'), method: 'POST')
-      .listen(applicationHandler.createApplication);
+      .listen(applicationHandler.createApplication)
+    ..serve(new UrlPattern(r'/applications/([0-9]+)'))
+      .listen(applicationHandler.getApplication);
   
   await postgresConnectionPool.start();
 }

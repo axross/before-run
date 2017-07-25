@@ -20,44 +20,55 @@ class SessionRepository {
 
   Future<Session> getSessionByToken(String token) async {
     final connection = await _postgresConnectionPool.connect();
-    final rows = await connection.query('select token from sessions where token = @token limit 1;', {
-      'token': token,
-    }).toList();
 
-    if (rows.length != 1) {
-      throw new SessionNotFoundException(token);
+    try {
+      final rows = await connection.query('select token from sessions where token = @token limit 1;', {
+        'token': token,
+      }).toList();
+
+      if (rows.length != 1) {
+        throw new SessionNotFoundException(token);
+      }
+
+      return _assembleSession(rows.first);
+    } finally {
+      connection.close();
     }
-
-    return _assembleSession(rows[0]);
   }
 
   Future<Session> createSession(User user) async {
-    final temporarySession = new Session.generateWithUser(user);
     final connection = await _postgresConnectionPool.connect();
-    final row = await connection.query('insert into sessions (token, user_id, created_at) values (@token, @userId, @now) returning token;', {
-      'token': temporarySession.token,
-      'userId': user.id,
-      'now': new DateTime.now(),
-    }).single;
 
-    connection.close();
+    try {
+      final temporarySession = new Session.generateWithUser(user);
+      final row = await connection.query('insert into sessions (token, user_id, created_at) values (@token, @userId, @now) returning token;', {
+        'token': temporarySession.token,
+        'userId': user.id,
+        'now': new DateTime.now(),
+      }).single;
 
-    return _assembleSession(row);
+      return _assembleSession(row);
+    } finally {
+      connection.close();
+    }
   }
 
   Future<dynamic> deleteSession(String token) async {
     final connection = await _postgresConnectionPool.connect();
-    final affectedRows = await connection.execute('delete from sessions where token = @token;', {
-      'token': token,
-    });
 
-    connection.close();
+    try {
+      final affectedRows = await connection.execute('delete from sessions where token = @token;', {
+        'token': token,
+      });
 
-    if (affectedRows == 0) {
-      throw new SessionNotFoundException(token);
+      
+
+      if (affectedRows == 0) {
+        throw new SessionNotFoundException(token);
+      }
+    } finally {
+      connection.close();
     }
-
-    return;
   }
 
   SessionRepository({@required Pool postgresConnectionPool}):

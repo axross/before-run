@@ -2,8 +2,9 @@ import 'dart:async' show Future;
 import 'dart:convert' show JsonUnsupportedObjectError, JSON, UTF8;
 import 'dart:io' show ContentType, HttpRequest;
 import 'package:meta/meta.dart';
+import '../exception/bad_request_exception.dart';
 
-class InvalidHttpRequestException implements Exception {
+class InvalidHttpRequestException extends BadRequestException {
   final HttpRequest request;
   final String message;
 

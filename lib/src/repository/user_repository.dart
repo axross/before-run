@@ -26,51 +26,59 @@ class UserRepository {
 
   Future<User> getUser(int userId) async {
     final connection = await _postgresConnectionPool.connect();
-    final row = await connection.query('select id, username, email, name, profile_image_url from users where id = @id limit 1;').single;
 
-    connection.close();
+    try {
+      final row = await connection.query('select id, username, email, name, profile_image_url from users where id = @id limit 1;').single;
 
-    return _assembleUser(row);
+      return _assembleUser(row);
+    } finally {
+      connection.close();
+    }
   }
 
   Future<User> createOrUpdate(User user) async {
     final connection = await _postgresConnectionPool.connect();
 
-    await connection.execute(
-      'insert into users (id, username, email, name, profile_image_url, created_at, updated_at) values (@id, @username, @email, @name, @profileImageUrl, @now, @now) on conflict (id) do update set username = @username, email = @email, name = @name, profile_image_url = @profileImageUrl, updated_at = @now;',
-      {
-        'id': user.id,
-        'username': user.username,
-        'email': user.email,
-        'name': user.name,
-        'profileImageUrl': user.profileImageUrl,
-        'now': new DateTime.now(),
-      },
-    );
+    try {
+      await connection.execute(
+        'insert into users (id, username, email, name, profile_image_url, created_at, updated_at) values (@id, @username, @email, @name, @profileImageUrl, @now, @now) on conflict (id) do update set username = @username, email = @email, name = @name, profile_image_url = @profileImageUrl, updated_at = @now;',
+        {
+          'id': user.id,
+          'username': user.username,
+          'email': user.email,
+          'name': user.name,
+          'profileImageUrl': user.profileImageUrl,
+          'now': new DateTime.now(),
+        },
+      );
 
-    final row = await connection.query('select id, username, email, name, profile_image_url from users where id = @id limit 1;').single;
+      final row = await connection.query('select id, username, email, name, profile_image_url from users where id = @id limit 1;').single;
 
-    connection.close();
-
-    return _assembleUser(row);
+      return _assembleUser(row);
+    } finally {
+      connection.close();
+    }
   }
 
   Future<User> getUserBySession(Session session) async {
     final connection = await _postgresConnectionPool.connect();
-    final rows = await connection.query(
-      'select users.id as id, username, email, name, profile_image_url from sessions inner join users on sessions.user_id = users.id where sessions.token = @token limit 1;',
-      {
-        'token': session.token,
-      },
-    ).toList();
 
-    connection.close();
+    try {
+      final rows = await connection.query(
+        'select users.id as id, username, email, name, profile_image_url from sessions inner join users on sessions.user_id = users.id where sessions.token = @token limit 1;',
+        {
+          'token': session.token,
+        },
+      ).toList();
 
-    if (rows.length != 1) {
-      throw new UserNotFoundException(token: session.token);
+      if (rows.length != 1) {
+        throw new UserNotFoundException(token: session.token);
+      }
+
+      return _assembleUser(rows.first);
+    } finally {
+      connection.close();
     }
-
-    return _assembleUser(rows[0]);
   }
 
   UserRepository({@required Pool postgresConnectionPool}):
