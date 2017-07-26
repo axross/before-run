@@ -7,6 +7,7 @@ import './handler/authenticate_callback.dart';
 import './handler/authenticate.dart';
 import './handler/create_application.dart';
 import './handler/create_application_environment.dart';
+import './handler/get_all_envrionments_of_application.dart';
 import './handler/get_application.dart';
 import './handler/get_me.dart';
 import './handler/revoke_session.dart';
@@ -73,6 +74,12 @@ Future<dynamic> startHttpServer({
   );
   final createApplicationEnvironment = new CreateApplicationEnvironment(
     applicationEnvironmentRepository: applicationEnvironmentRepository,
+    applicationRepository: applicationRepository,
+    authenticationService: authenticationService,
+  );
+  final getAllEnvironmentsOfApplication = new GetAllEnvironmentsOfApplication(
+    applicationEnvironmentRepository: applicationEnvironmentRepository,
+    applicationRepository: applicationRepository,
     authenticationService: authenticationService,
   );
   final getApplication = new GetApplication(
@@ -95,6 +102,8 @@ Future<dynamic> startHttpServer({
       .listen(createApplication)
     ..serve(new UrlPattern(r'/applications/([0-9]+)'), method: 'GET')
       .listen(getApplication)
+    ..serve(new UrlPattern(r'/applications/([0-9]+)/environments'), method: 'GET')
+      .listen(getAllEnvironmentsOfApplication)
     ..serve(new UrlPattern(r'/applications/([0-9]+)/environments'), method: 'POST')
       .listen(createApplicationEnvironment);
   

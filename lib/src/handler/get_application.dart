@@ -18,7 +18,7 @@ class GetApplication extends RequestHandler {
     handle(request, () async {
       final id = int.parse(request.uri.path.split('/').last, radix: 10);
       final user = await _authenticationService.authenticate(request);
-      final application = await _applicationRepository.getApplication(id: id, owner: user);
+      final application = await _applicationRepository.getApplication(id: id, requester: user);
 
       return _serializeApplication(application);
     });

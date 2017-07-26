@@ -9,13 +9,34 @@ import './src/resource_exception.dart';
 class UserRepository {
   final Pool _postgresConnectionPool;
 
-  Future<User> getUser(int userId) async {
+  // Future<User> getUser(int userId) async {
+  //   final connection = await _postgresConnectionPool.connect();
+
+  //   try {
+  //     final row = await connection.query('select id, username, email, name, profile_image_url from users where id = @id limit 1;').single;
+
+  //     return deserializeToUser(row);
+  //   } finally {
+  //     connection.close();
+  //   }
+  // }
+
+  Future<User> getUserBySession(Session session) async {
     final connection = await _postgresConnectionPool.connect();
 
     try {
-      final row = await connection.query('select id, username, email, name, profile_image_url from users where id = @id limit 1;').single;
+      final rows = await connection.query(
+        'select users.id as id, username, email, name, profile_image_url from sessions inner join users on sessions.user_id = users.id where sessions.token = @token limit 1;',
+        {
+          'token': session.token,
+        },
+      ).toList();
 
-      return deserializeToUser(row);
+      if (rows.isEmpty) {
+        throw new UserNotFoundException(token: session.token);
+      }
+
+      return deserializeToUser(rows.first);
     } finally {
       connection.close();
     }
@@ -40,27 +61,6 @@ class UserRepository {
       final row = await connection.query('select id, username, email, name, profile_image_url from users where id = @id limit 1;').single;
 
       return deserializeToUser(row);
-    } finally {
-      connection.close();
-    }
-  }
-
-  Future<User> getUserBySession(Session session) async {
-    final connection = await _postgresConnectionPool.connect();
-
-    try {
-      final rows = await connection.query(
-        'select users.id as id, username, email, name, profile_image_url from sessions inner join users on sessions.user_id = users.id where sessions.token = @token limit 1;',
-        {
-          'token': session.token,
-        },
-      ).toList();
-
-      if (rows.isEmpty) {
-        throw new UserNotFoundException(token: session.token);
-      }
-
-      return deserializeToUser(rows.first);
     } finally {
       connection.close();
     }

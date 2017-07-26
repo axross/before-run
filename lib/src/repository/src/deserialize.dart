@@ -4,7 +4,7 @@ import '../../entity/application_environment.dart';
 import '../../entity/session.dart';
 import '../../entity/user.dart';
 
-Application deserializeToApplication(Row row) => new Application(id: row.id, name: row.name);
+Application deserializeToApplication(Row row) => new Application(id: row.id, name: row.name, ownerId: row.owner_id);
 
 ApplicationEnvironment deserializeToApplicationEnvironment(Row row) =>
   new ApplicationEnvironment(id: row.id, name: row.name);

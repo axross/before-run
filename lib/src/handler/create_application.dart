@@ -26,7 +26,7 @@ class CreateApplication extends RequestHandler {
 
       final String name = payload['name'];
       final user = await _authenticationService.authenticate(request);
-      final application = await _applicationRepository.createApplication(name: name, owner: user);
+      final application = await _applicationRepository.createApplication(name: name, requester: user);
 
       return _serializeApplication(application);
     }, statusCode: 201);

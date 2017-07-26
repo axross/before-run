@@ -1,33 +1,50 @@
 import 'package:meta/meta.dart';
-import '../../entity/application.dart';
 import '../../entity/user.dart';
 import '../../request_exception.dart';
 
 class ApplicationNotFoundException extends NotFoundException {
-  final User owner;
   final int id;
 
-  String toString() => 'An application (owner: "${owner.name}", id: "$id") is not found.';
+  String toString() => 'An application (id: "$id") is not found.';
 
-  ApplicationNotFoundException({@required this.owner, @required this.id});
+  ApplicationNotFoundException({@required this.id});
+}
+
+class ApplicationForbiddenException extends ForbiddenException {
+  final int id;
+  final User requester;
+
+  String toString() => 'An application (id: "$id") cannot be browsed by an user (username: "${requester.username}").';
+
+  ApplicationForbiddenException({@required this.id, @required this.requester});
 }
 
 class ApplicationConflictException extends ConflictException {
-  final User owner;
   final String name;
+  final User requester;
 
-  String toString() => 'Creating an application (owner: "${owner.name}", name: "$name") is conflicted.';
+  String toString() => 'Creating an application (name: "$name") for an user (username: "${requester.username}") is already existed.';
 
-  ApplicationConflictException({@required this.owner, @required this.name});
+  ApplicationConflictException({@required this.name, @required this.requester});
 }
 
 class ApplicationEnvironmentNotFoundException extends NotFoundException {
-  final int applicationId;
   final int id;
+  final int applicationId;
 
   String toString() => 'An application environment (id: "$id") of an application (id: "${applicationId}") is not found.';
 
-  ApplicationEnvironmentNotFoundException({@required this.applicationId, @required this.id});
+  ApplicationEnvironmentNotFoundException({@required this.id, @required this.applicationId});
+}
+
+class ApplicationEnvironmentForbiddenException extends NotFoundException {
+  final int id;
+  final int applicationId;
+  final User requester;
+
+  String toString() => 'An application environment (id: "$id") of an application (id: "${applicationId}") cannot be browsed by an user (username: "${requester.username}").';
+
+  ApplicationEnvironmentForbiddenException({@required this.id, @required this.applicationId, @required this.requester});
 }
 
 class ApplicationEnvironmentConflictException extends ConflictException {

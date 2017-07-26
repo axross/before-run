@@ -6,6 +6,8 @@ import '../entity/user.dart';
 import './src/deserialize.dart';
 import './src/resource_exception.dart';
 
+export './src/resource_exception.dart' show SessionNotFoundException;
+
 class SessionRepository {
   final Pool _postgresConnectionPool;
 

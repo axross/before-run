@@ -14,6 +14,10 @@ abstract class UnauthorizedException extends RequestException {
   int statusCode = HttpStatus.UNAUTHORIZED;
 }
 
+abstract class ForbiddenException extends RequestException {
+  int statusCode = HttpStatus.FORBIDDEN;
+}
+
 abstract class NotFoundException extends RequestException {
   int statusCode = HttpStatus.NOT_FOUND;
 }
