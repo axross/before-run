@@ -4,24 +4,26 @@ import 'package:http/http.dart' show get;
 import '../entity/user.dart' show User;
 import '../utility/validate.dart';
 
-final Validator _userValidator = new Validator({
-  'id': [isNotNull, isPositive],
-  'login': [isNotNull, isNonEmptyString],
-  'email': [isNotNull, isEmail],
-  'name': [isNotNull],
-  'avatar_url': [isNotNull, isUrl],
-});
+void _validatePayloadForUser(Map<dynamic, dynamic> value) =>
+  validate(value, allOf(
+    containsPair('id', allOf(isNotNull, isPositive)),
+    containsPair('login', allOf(isNotNull, const isInstanceOf<String>(), isNotEmpty)),
+    containsPair('email', allOf(isNotNull, isEmail)),
+    containsPair('name', isNotNull),
+    containsPair('avatar_url', allOf(isNotNull, isUrl)),
+  ));
 
 User _decodeToUser(String json) {
-  final object = JSON.decode(json);
-  final validated = _userValidator.validate(object);
+  final decoded = JSON.decode(json);
+  
+  _validatePayloadForUser(decoded);
 
   return new User(
-    id: validated['id'],
-    username: validated['login'],
-    email: validated['email'],
-    name: validated['name'],
-    profileImageUrl: validated['avatar_url'],
+    id: decoded['id'],
+    username: decoded['login'],
+    email: decoded['email'],
+    name: decoded['name'],
+    profileImageUrl: decoded['avatar_url'],
   );
 }
 

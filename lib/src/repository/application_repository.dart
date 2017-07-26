@@ -4,16 +4,17 @@ import 'package:postgresql/postgresql.dart' show Row;
 import 'package:postgresql/pool.dart' show Pool;
 import '../entity/application.dart';
 import '../entity/user.dart';
+import '../request_exception.dart';
 
 Application _assembleApplication(Row row) => new Application(id: row.id, name: row.name);
 
-class ApplicationNotFoundException implements Exception {
+class ApplicationNotFoundException extends NotFoundException {
   final User owner;
-  final String name;
+  final int id;
 
-  String toString() => 'An application (owner: "${owner.name}", name: "$name") is not found.';
+  String toString() => 'An application (owner: "${owner.name}", id: "$id") is not found.';
 
-  ApplicationNotFoundException({@required this.owner, @required this.name});
+  ApplicationNotFoundException({@required this.owner, @required this.id});
 }
 
 class ApplicationRepository {
@@ -29,7 +30,7 @@ class ApplicationRepository {
       }).toList();
 
       if (rows.length != 1) {
-        throw new ApplicationNotFoundException(owner: owner, name: name);
+        throw new ApplicationNotFoundException(owner: owner, id: id);
       }
 
       return _assembleApplication(rows[0]);

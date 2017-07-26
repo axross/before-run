@@ -4,10 +4,11 @@ import 'package:meta/meta.dart';
 import '../entity/user.dart';
 import '../repository/session_repository.dart';
 import '../repository/user_repository.dart';
+import '../request_exception.dart';
 
 final RegExp _headerValueRegExp = new RegExp(r'^token [a-z0-9]{64}$');
 
-class AuthenticationException implements Exception {
+class AuthenticationException extends UnauthorizedException {
   final String message;
 
   String toString() => message;

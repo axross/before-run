@@ -3,9 +3,12 @@ import 'dart:io' show HttpServer, InternetAddress;
 import 'package:postgresql/pool.dart';
 import 'package:route/server.dart';
 import 'package:meta/meta.dart';
-import './handler/application_handler.dart';
-import './handler/authentication_handler.dart';
-import './handler/user_handler.dart';
+import './handler/authenticate_callback.dart';
+import './handler/authenticate.dart';
+import './handler/create_application.dart';
+import './handler/get_application.dart';
+import './handler/get_me.dart';
+import './handler/revoke_session.dart';
 import './repository/application_repository.dart';
 import './repository/github_access_token_repository.dart';
 import './repository/session_repository.dart';
@@ -52,32 +55,37 @@ Future<dynamic> startHttpServer({
   );
 
   // request handlers
-  final applicationHandler = new ApplicationHandler(
-    applicationRepository: applicationRepository,
-    authenticationService: authenticationService,
-  );
-  final authenticationHandler = new AuthenticationHandler(
-    githubOauthClientId: githubOauthClientId,
+  final authenticate = new Authenticate(githubOauthClientId: githubOauthClientId);
+  final authenticateCallback = new AuthenticateCallback(
     githubAccessTokenRepository: githubAccessTokenRepository,
     sessionRepository: sessionRepository,
     userGithubRepository: userGithubRepository,
     userRepository: userRepository,
   );
-  final userHandler = new UserHandler(authenticationService: authenticationService);
+  final createApplication = new CreateApplication(
+    applicationRepository: applicationRepository,
+    authenticationService: authenticationService,
+  );
+  final getApplication = new GetApplication(
+    applicationRepository: applicationRepository,
+    authenticationService: authenticationService,
+  );
+  final getMe = new GetMe(authenticationService: authenticationService);
+  final revokeSession = new RevokeSession(sessionRepository: sessionRepository);
 
   router
     ..serve(new UrlPattern(r'/sessions'), method: 'GET')
-      .listen(authenticationHandler.authenticateUser)
-    ..serve(new UrlPattern(r'/sessions/([a-f0-9]{64})'), method: 'DELETE')
-      .listen(authenticationHandler.revokeSession)
+      .listen(authenticate)
     ..serve(new UrlPattern(r'/sessions/callback'), method: 'GET')
-      .listen(authenticationHandler.receiveOauthCallback)
+      .listen(authenticateCallback)
+    ..serve(new UrlPattern(r'/sessions/([a-f0-9]{64})'), method: 'DELETE')
+      .listen(revokeSession)
     ..serve(new UrlPattern(r'/users/me'), method: 'GET')
-      .listen(userHandler.getMe)
+      .listen(getMe)
     ..serve(new UrlPattern(r'/applications'), method: 'POST')
-      .listen(applicationHandler.createApplication)
+      .listen(createApplication)
     ..serve(new UrlPattern(r'/applications/([0-9]+)'))
-      .listen(applicationHandler.getApplication);
+      .listen(getApplication);
   
   await postgresConnectionPool.start();
 }

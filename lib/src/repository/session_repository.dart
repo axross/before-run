@@ -4,10 +4,11 @@ import 'package:postgresql/postgresql.dart' show Row;
 import 'package:postgresql/pool.dart' show Pool;
 import '../entity/session.dart';
 import '../entity/user.dart';
+import '../request_exception.dart';
 
 Session _assembleSession(Row row) => row == null ? null : new Session.fromToken(row.token);
 
-class SessionNotFoundException implements Exception {
+class SessionNotFoundException extends NotFoundException {
   final String token;
 
   String toString() => 'Authentication token "$token" is not a valid token.';
@@ -60,8 +61,6 @@ class SessionRepository {
       final affectedRows = await connection.execute('delete from sessions where token = @token;', {
         'token': token,
       });
-
-      
 
       if (affectedRows == 0) {
         throw new SessionNotFoundException(token);

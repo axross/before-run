@@ -4,11 +4,12 @@ import 'package:postgresql/postgresql.dart' show Row;
 import 'package:postgresql/pool.dart' show Pool;
 import '../entity/session.dart';
 import '../entity/user.dart';
+import '../request_exception.dart';
 
 User _assembleUser(Row row) =>
   new User(id: row.id, username: row.username, email: row.email, name: row.name, profileImageUrl: row.profile_image_url);
 
-class UserNotFoundException implements Exception {
+class UserNotFoundException extends NotFoundException {
   final int id;
   final String token;
 
