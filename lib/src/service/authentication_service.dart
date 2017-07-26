@@ -36,8 +36,6 @@ class AuthenticationService {
       return await _userRepository.getUserBySession(session);
     } on SessionNotFoundException catch (_) {
       throw new AuthenticationException('Authentication token `$token` is not a valid token.');
-    } on UserNotFoundException catch (_) {
-      throw new StateError('起こるはずがない');
     }
   }
 
