@@ -38,21 +38,9 @@ abstract class RequestHandler {
       print(err);
       print(st);
 
-      if (err is BadRequestException) {
+      if (err is RequestException) {
         request.response
-          ..statusCode = 400
-          ..headers.contentType = ContentType.TEXT
-          ..write(err.toString())
-          ..close();
-      } else if (err is UnauthorizedException) {
-        request.response
-          ..statusCode = 401
-          ..headers.contentType = ContentType.TEXT
-          ..write(err.toString())
-          ..close();
-      } else if (err is NotFoundException) {
-        request.response
-          ..statusCode = 404
+          ..statusCode = err.statusCode
           ..headers.contentType = ContentType.TEXT
           ..write(err.toString())
           ..close();

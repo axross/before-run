@@ -1,4 +1,3 @@
-import 'dart:convert' show JSON;
 import 'dart:io' show HttpRequest;
 import 'package:meta/meta.dart';
 import '../entity/application.dart';
@@ -10,7 +9,7 @@ import '../request_handler.dart';
 void _validatePayloadForCreate(Map<dynamic, dynamic> value) =>
   validate(value, containsPair('name', allOf(isNotNull, matches(new RegExp(r'^[a-z0-9_\-]{1,100}$')))));
 
-String _serializeApplication(Application application) => {
+Map<String, dynamic> _serializeApplication(Application application) => {
   'id': application.id,
   'name': application.name,
 };

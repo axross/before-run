@@ -5,7 +5,7 @@ import '../repository/application_repository.dart';
 import '../service/authentication_service.dart';
 import '../request_handler.dart';
 
-String _serializeApplication(Application application) => {
+Map<String, dynamic> _serializeApplication(Application application) => {
   'id': application.id,
   'name': application.name,
 };

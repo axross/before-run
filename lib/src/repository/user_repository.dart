@@ -1,26 +1,10 @@
 import 'dart:async';
 import 'package:meta/meta.dart';
-import 'package:postgresql/postgresql.dart' show Row;
 import 'package:postgresql/pool.dart' show Pool;
 import '../entity/session.dart';
 import '../entity/user.dart';
-import '../request_exception.dart';
-
-User _assembleUser(Row row) =>
-  new User(id: row.id, username: row.username, email: row.email, name: row.name, profileImageUrl: row.profile_image_url);
-
-class UserNotFoundException extends NotFoundException {
-  final int id;
-  final String token;
-
-  String toString() => id != null
-    ? 'An user (id: "$id") is not found.'
-    : 'An user (authentication token: "$token") is not found.';
-  
-  UserNotFoundException({this.id, this.token}) {
-    assert(id != null || token != null);
-  }
-}
+import './src/deserialize.dart';
+import './src/resource_exception.dart';
 
 class UserRepository {
   final Pool _postgresConnectionPool;
@@ -31,7 +15,7 @@ class UserRepository {
     try {
       final row = await connection.query('select id, username, email, name, profile_image_url from users where id = @id limit 1;').single;
 
-      return _assembleUser(row);
+      return deserializeToUser(row);
     } finally {
       connection.close();
     }
@@ -55,7 +39,7 @@ class UserRepository {
 
       final row = await connection.query('select id, username, email, name, profile_image_url from users where id = @id limit 1;').single;
 
-      return _assembleUser(row);
+      return deserializeToUser(row);
     } finally {
       connection.close();
     }
@@ -72,11 +56,11 @@ class UserRepository {
         },
       ).toList();
 
-      if (rows.length != 1) {
+      if (rows.isEmpty) {
         throw new UserNotFoundException(token: session.token);
       }
 
-      return _assembleUser(rows.first);
+      return deserializeToUser(rows.first);
     } finally {
       connection.close();
     }

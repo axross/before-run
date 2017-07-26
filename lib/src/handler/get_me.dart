@@ -4,7 +4,7 @@ import '../entity/user.dart';
 import '../service/authentication_service.dart';
 import '../request_handler.dart';
 
-String _serializeUser(User user) => {
+Map<String, dynamic> _serializeUser(User user) => {
   'id': user.id,
   'username': user.username,
   'email': user.email,

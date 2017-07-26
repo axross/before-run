@@ -1,11 +1,23 @@
-abstract class BadRequestException implements Exception {
+import 'dart:io' show HttpStatus;
+
+abstract class RequestException implements Exception {
+  int statusCode;
+
   String toString();
 }
 
-abstract class UnauthorizedException implements Exception {
-  String toString();
+abstract class BadRequestException extends RequestException {
+  int statusCode = HttpStatus.BAD_REQUEST;
 }
 
-abstract class NotFoundException implements Exception {
-  String toString();
+abstract class UnauthorizedException extends RequestException {
+  int statusCode = HttpStatus.UNAUTHORIZED;
+}
+
+abstract class NotFoundException extends RequestException {
+  int statusCode = HttpStatus.NOT_FOUND;
+}
+
+abstract class ConflictException extends RequestException {
+  int statusCode = HttpStatus.CONFLICT;
 }

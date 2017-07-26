@@ -6,10 +6,12 @@ import 'package:meta/meta.dart';
 import './handler/authenticate_callback.dart';
 import './handler/authenticate.dart';
 import './handler/create_application.dart';
+import './handler/create_application_environment.dart';
 import './handler/get_application.dart';
 import './handler/get_me.dart';
 import './handler/revoke_session.dart';
 import './repository/application_repository.dart';
+import './repository/application_environment_repository.dart';
 import './repository/github_access_token_repository.dart';
 import './repository/session_repository.dart';
 import './repository/user_github_repository.dart';
@@ -34,6 +36,9 @@ Future<dynamic> startHttpServer({
 
   // repositories
   final applicationRepository = new ApplicationRepository(
+    postgresConnectionPool: postgresConnectionPool,
+  );
+  final applicationEnvironmentRepository = new ApplicationEnvironmentRepository(
     postgresConnectionPool: postgresConnectionPool,
   );
   final githubAccessTokenRepository = new GithubAccessTokenRepository(
@@ -66,6 +71,10 @@ Future<dynamic> startHttpServer({
     applicationRepository: applicationRepository,
     authenticationService: authenticationService,
   );
+  final createApplicationEnvironment = new CreateApplicationEnvironment(
+    applicationEnvironmentRepository: applicationEnvironmentRepository,
+    authenticationService: authenticationService,
+  );
   final getApplication = new GetApplication(
     applicationRepository: applicationRepository,
     authenticationService: authenticationService,
@@ -84,8 +93,10 @@ Future<dynamic> startHttpServer({
       .listen(getMe)
     ..serve(new UrlPattern(r'/applications'), method: 'POST')
       .listen(createApplication)
-    ..serve(new UrlPattern(r'/applications/([0-9]+)'))
-      .listen(getApplication);
+    ..serve(new UrlPattern(r'/applications/([0-9]+)'), method: 'GET')
+      .listen(getApplication)
+    ..serve(new UrlPattern(r'/applications/([0-9]+)/environments'), method: 'POST')
+      .listen(createApplicationEnvironment);
   
   await postgresConnectionPool.start();
 }

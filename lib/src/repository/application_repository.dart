@@ -1,21 +1,11 @@
 import 'dart:async' show Future;
 import 'package:meta/meta.dart';
-import 'package:postgresql/postgresql.dart' show Row;
+import 'package:postgresql/postgresql.dart' show PostgresqlException;
 import 'package:postgresql/pool.dart' show Pool;
 import '../entity/application.dart';
 import '../entity/user.dart';
-import '../request_exception.dart';
-
-Application _assembleApplication(Row row) => new Application(id: row.id, name: row.name);
-
-class ApplicationNotFoundException extends NotFoundException {
-  final User owner;
-  final int id;
-
-  String toString() => 'An application (owner: "${owner.name}", id: "$id") is not found.';
-
-  ApplicationNotFoundException({@required this.owner, @required this.id});
-}
+import './src/deserialize.dart';
+import './src/resource_exception.dart';
 
 class ApplicationRepository {
   final Pool _postgresConnectionPool;
@@ -29,11 +19,11 @@ class ApplicationRepository {
         'ownerId': owner.id,
       }).toList();
 
-      if (rows.length != 1) {
+      if (rows.isEmpty) {
         throw new ApplicationNotFoundException(owner: owner, id: id);
       }
 
-      return _assembleApplication(rows[0]);
+      return deserializeToApplication(rows[0]);
     } finally {
       connection.close();
     }
@@ -49,7 +39,13 @@ class ApplicationRepository {
         'now': new DateTime.now(),
       }).single;
 
-      return _assembleApplication(row);
+      return deserializeToApplication(row);
+    } on PostgresqlException catch (err, st) {
+      if (err.toString().contains('duplicate key value violates unique constraint')) {
+        throw new ApplicationConflictException(owner: owner, name: name);
+      }
+
+      rethrow;
     } finally {
       connection.close();
     }

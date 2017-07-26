@@ -1,20 +1,10 @@
 import 'dart:async';
 import 'package:meta/meta.dart';
-import 'package:postgresql/postgresql.dart' show Row;
 import 'package:postgresql/pool.dart' show Pool;
 import '../entity/session.dart';
 import '../entity/user.dart';
-import '../request_exception.dart';
-
-Session _assembleSession(Row row) => row == null ? null : new Session.fromToken(row.token);
-
-class SessionNotFoundException extends NotFoundException {
-  final String token;
-
-  String toString() => 'Authentication token "$token" is not a valid token.';
-
-  SessionNotFoundException(this.token);
-}
+import './src/deserialize.dart';
+import './src/resource_exception.dart';
 
 class SessionRepository {
   final Pool _postgresConnectionPool;
@@ -27,11 +17,11 @@ class SessionRepository {
         'token': token,
       }).toList();
 
-      if (rows.length != 1) {
+      if (rows.isEmpty) {
         throw new SessionNotFoundException(token);
       }
 
-      return _assembleSession(rows.first);
+      return deserializeToSession(rows.first);
     } finally {
       connection.close();
     }
@@ -48,7 +38,7 @@ class SessionRepository {
         'now': new DateTime.now(),
       }).single;
 
-      return _assembleSession(row);
+      return deserializeToSession(row);
     } finally {
       connection.close();
     }
