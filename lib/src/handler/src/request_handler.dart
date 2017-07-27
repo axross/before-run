@@ -2,7 +2,9 @@ import 'dart:async' show Future, runZoned;
 import 'dart:convert' show JsonUnsupportedObjectError, JSON, UTF8;
 import 'dart:io' show ContentType, HttpRequest;
 import 'package:meta/meta.dart';
-import './request_exception.dart';
+import '../../request_exception.dart';
+
+export 'dart:io' show HttpRequest;
 
 typedef Future<T> HandlerBody<T>();
 

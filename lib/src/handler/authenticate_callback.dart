@@ -1,10 +1,9 @@
-import 'dart:io' show HttpRequest;
 import 'package:meta/meta.dart';
 import '../repository/github_access_token_repository.dart';
 import '../repository/session_repository.dart';
 import '../repository/user_github_repository.dart';
 import '../repository/user_repository.dart';
-import '../request_handler.dart';
+import './src/request_handler.dart';
 
 class AuthenticateCallback extends RequestHandler {
   final GithubAccessTokenRepository _githubAccessTokenRepository;

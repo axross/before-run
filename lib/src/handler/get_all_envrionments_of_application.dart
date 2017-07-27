@@ -1,10 +1,9 @@
-import 'dart:io' show HttpRequest;
 import 'package:meta/meta.dart';
 import '../entity/application_environment.dart';
 import '../repository/application_environment_repository.dart';
 import '../repository/application_repository.dart';
 import '../service/authentication_service.dart';
-import '../request_handler.dart';
+import './src/request_handler.dart';
 
 Map<String, dynamic> _serializeApplicationEnvironment(ApplicationEnvironment environment) => {
   'id': environment.id,

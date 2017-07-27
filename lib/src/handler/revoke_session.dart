@@ -1,7 +1,6 @@
-import 'dart:io' show HttpRequest;
 import 'package:meta/meta.dart';
 import '../repository/session_repository.dart';
-import '../request_handler.dart';
+import './src/request_handler.dart';
 
 class RevokeSession extends RequestHandler {
   final SessionRepository _sessionRepository;

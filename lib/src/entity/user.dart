@@ -1,3 +1,5 @@
+import 'package:meta/meta.dart';
+
 class User {
   final int id;
   final String username;
@@ -5,5 +7,11 @@ class User {
   final String name;
   final String profileImageUrl;
 
-  User({this.id, this.username, this.email, this.name, this.profileImageUrl});
+  User({
+    @required this.id, 
+    @required this.username, 
+    @required this.email, 
+    @required this.name, 
+    @required this.profileImageUrl,
+  });
 }

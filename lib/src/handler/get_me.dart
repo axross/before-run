@@ -1,8 +1,7 @@
-import 'dart:io' show HttpRequest;
 import 'package:meta/meta.dart';
 import '../entity/user.dart';
 import '../service/authentication_service.dart';
-import '../request_handler.dart';
+import './src/request_handler.dart';
 
 Map<String, dynamic> _serializeUser(User user) => {
   'id': user.id,

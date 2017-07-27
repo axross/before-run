@@ -1,11 +1,10 @@
-import 'dart:io' show HttpRequest;
 import 'package:meta/meta.dart';
 import '../entity/application_environment.dart';
 import '../repository/application_environment_repository.dart';
 import '../repository/application_repository.dart';
 import '../service/authentication_service.dart';
 import '../utility/validate.dart';
-import '../request_handler.dart';
+import './src/request_handler.dart';
 
 void _validatePayloadForCreate(Map<dynamic, dynamic> value) =>
   validate(value, containsPair('name', allOf(isNotNull, matches(new RegExp(r'^[a-z0-9_\-]{1,100}$')))));
