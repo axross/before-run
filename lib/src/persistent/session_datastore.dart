@@ -8,7 +8,7 @@ import './src/resource_exception.dart';
 
 export './src/resource_exception.dart' show SessionNotFoundException;
 
-class SessionRepository {
+class SessionDatastore {
   final Pool _postgresConnectionPool;
 
   Future<Session> getSessionByToken(String token) async {
@@ -62,6 +62,6 @@ class SessionRepository {
     }
   }
 
-  SessionRepository({@required Pool postgresConnectionPool}):
+  SessionDatastore({@required Pool postgresConnectionPool}):
     _postgresConnectionPool = postgresConnectionPool;
 }

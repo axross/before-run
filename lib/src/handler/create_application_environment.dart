@@ -1,7 +1,7 @@
 import 'package:meta/meta.dart';
 import '../entity/application_environment.dart';
-import '../repository/application_environment_repository.dart';
-import '../repository/application_repository.dart';
+import '../persistent/application_environment_datastore.dart';
+import '../persistent/application_datastore.dart';
 import '../service/authentication_service.dart';
 import '../utility/validate.dart';
 import './src/request_handler.dart';
@@ -18,8 +18,8 @@ int _extractApplicationId(Uri url) =>
   int.parse(new RegExp(r'applications/([0-9]+)').firstMatch('$url').group(1), radix: 10);
 
 class CreateApplicationEnvironment extends RequestHandler {
-  final ApplicationEnvironmentRepository _applicationEnvironmentRepository;
-  final ApplicationRepository _applicationRepository;
+  final ApplicationEnvironmentDatastore _applicationEnvironmentDatastore;
+  final ApplicationDatastore _applicationDatastore;
   final AuthenticationService _authenticationService;
 
   void call(HttpRequest request) {
@@ -33,20 +33,20 @@ class CreateApplicationEnvironment extends RequestHandler {
       final user = await _authenticationService.authenticate(request);
 
       // check permission to browse an application
-      await _applicationRepository.getApplication(id: applicationId, requester: user);
+      await _applicationDatastore.getApplication(id: applicationId, requester: user);
 
-      final environment = await _applicationEnvironmentRepository.createEnvironment(name: name, applicationId: applicationId, requester: user);
+      final environment = await _applicationEnvironmentDatastore.createEnvironment(name: name, applicationId: applicationId, requester: user);
 
       return _serializeApplicationEnvironment(environment);
     }, statusCode: 201);
   }
   
   CreateApplicationEnvironment({
-    @required ApplicationEnvironmentRepository applicationEnvironmentRepository,
-    @required ApplicationRepository applicationRepository,
+    @required ApplicationEnvironmentDatastore applicationEnvironmentDatastore,
+    @required ApplicationDatastore applicationDatastore,
     @required AuthenticationService authenticationService,
   }):
-    _applicationEnvironmentRepository = applicationEnvironmentRepository,
-    _applicationRepository = applicationRepository,
+    _applicationEnvironmentDatastore = applicationEnvironmentDatastore,
+    _applicationDatastore = applicationDatastore,
     _authenticationService = authenticationService;
 }

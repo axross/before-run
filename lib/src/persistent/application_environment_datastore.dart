@@ -7,7 +7,7 @@ import '../entity/user.dart';
 import './src/deserialize.dart';
 import './src/resource_exception.dart';
 
-class ApplicationEnvironmentRepository {
+class ApplicationEnvironmentDatastore {
   final Pool _postgresConnectionPool;
 
   Future<List<ApplicationEnvironment>> getAllEnvironments({@required int applicationId, @required User requester}) async {
@@ -65,6 +65,6 @@ class ApplicationEnvironmentRepository {
     }
   }
   
-  ApplicationEnvironmentRepository({@required postgresConnectionPool}):
+  ApplicationEnvironmentDatastore({@required postgresConnectionPool}):
     _postgresConnectionPool = postgresConnectionPool;
 }

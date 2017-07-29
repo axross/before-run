@@ -27,7 +27,7 @@ User _decodeToUser(String json) {
   );
 }
 
-class UserGithubRepository {
+class UserGithubDatastore {
   Future<User> getUser(String accessToken) async {
     final response = await get(new Uri.https('api.github.com', '/user'), headers: {
       'accept': 'application/vnd.github.v3+json',

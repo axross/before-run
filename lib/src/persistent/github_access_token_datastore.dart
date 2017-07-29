@@ -4,7 +4,7 @@ import 'package:http/http.dart' show post;
 import 'package:meta/meta.dart';
 import '../entity/uuid.dart' show Uuid;
 
-class GithubAccessTokenRepository {
+class GithubAccessTokenDatastore {
   final String _oauthClientId;
   final String _oauthClientSecret;
 
@@ -24,7 +24,7 @@ class GithubAccessTokenRepository {
     return accessToken;
   }
 
-  GithubAccessTokenRepository({@required String oauthClientId, @required String oauthClientSecret}):
+  GithubAccessTokenDatastore({@required String oauthClientId, @required String oauthClientSecret}):
     _oauthClientId = oauthClientId,
     _oauthClientSecret = oauthClientSecret;
 }

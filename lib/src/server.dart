@@ -11,12 +11,12 @@ import './handler/get_all_envrionments_of_application.dart';
 import './handler/get_application.dart';
 import './handler/get_me.dart';
 import './handler/revoke_session.dart';
-import './repository/application_repository.dart';
-import './repository/application_environment_repository.dart';
-import './repository/github_access_token_repository.dart';
-import './repository/session_repository.dart';
-import './repository/user_github_repository.dart';
-import './repository/user_repository.dart';
+import './persistent/application_datastore.dart';
+import './persistent/application_environment_datastore.dart';
+import './persistent/github_access_token_datastore.dart';
+import './persistent/session_datastore.dart';
+import './persistent/user_github_datastore.dart';
+import './persistent/user_datastore.dart';
 import './service/authentication_service.dart';
 
 Future<dynamic> startHttpServer({
@@ -36,58 +36,58 @@ Future<dynamic> startHttpServer({
   );
 
   // repositories
-  final applicationRepository = new ApplicationRepository(
+  final applicationDatastore = new ApplicationDatastore(
     postgresConnectionPool: postgresConnectionPool,
   );
-  final applicationEnvironmentRepository = new ApplicationEnvironmentRepository(
+  final applicationEnvironmentDatastore = new ApplicationEnvironmentDatastore(
     postgresConnectionPool: postgresConnectionPool,
   );
-  final githubAccessTokenRepository = new GithubAccessTokenRepository(
+  final githubAccessTokenDatastore = new GithubAccessTokenDatastore(
     oauthClientId: githubOauthClientId,
     oauthClientSecret: githubOauthClientSecret,
   );
-  final sessionRepository = new SessionRepository(
+  final sessionDatastore = new SessionDatastore(
     postgresConnectionPool: postgresConnectionPool,
   );
-  final userGithubRepository = new UserGithubRepository();
-  final userRepository = new UserRepository(
+  final userGithubDatastore = new UserGithubDatastore();
+  final userDatastore = new UserDatastore(
     postgresConnectionPool: postgresConnectionPool,
   );
 
   // services
   final authenticationService = new AuthenticationService(
-    userRepository: userRepository,
-    sessionRepository: sessionRepository,
+    userDatastore: userDatastore,
+    sessionDatastore: sessionDatastore,
   );
 
   // request handlers
   final authenticate = new Authenticate(githubOauthClientId: githubOauthClientId);
   final authenticateCallback = new AuthenticateCallback(
-    githubAccessTokenRepository: githubAccessTokenRepository,
-    sessionRepository: sessionRepository,
-    userGithubRepository: userGithubRepository,
-    userRepository: userRepository,
+    githubAccessTokenDatastore: githubAccessTokenDatastore,
+    sessionDatastore: sessionDatastore,
+    userGithubDatastore: userGithubDatastore,
+    userDatastore: userDatastore,
   );
   final createApplication = new CreateApplication(
-    applicationRepository: applicationRepository,
+    applicationDatastore: applicationDatastore,
     authenticationService: authenticationService,
   );
   final createApplicationEnvironment = new CreateApplicationEnvironment(
-    applicationEnvironmentRepository: applicationEnvironmentRepository,
-    applicationRepository: applicationRepository,
+    applicationEnvironmentDatastore: applicationEnvironmentDatastore,
+    applicationDatastore: applicationDatastore,
     authenticationService: authenticationService,
   );
   final getAllEnvironmentsOfApplication = new GetAllEnvironmentsOfApplication(
-    applicationEnvironmentRepository: applicationEnvironmentRepository,
-    applicationRepository: applicationRepository,
+    applicationEnvironmentDatastore: applicationEnvironmentDatastore,
+    applicationDatastore: applicationDatastore,
     authenticationService: authenticationService,
   );
   final getApplication = new GetApplication(
-    applicationRepository: applicationRepository,
+    applicationDatastore: applicationDatastore,
     authenticationService: authenticationService,
   );
   final getMe = new GetMe(authenticationService: authenticationService);
-  final revokeSession = new RevokeSession(sessionRepository: sessionRepository);
+  final revokeSession = new RevokeSession(sessionDatastore: sessionDatastore);
 
   router
     ..serve(new UrlPattern(r'/sessions'), method: 'GET')

@@ -1,6 +1,6 @@
 import 'package:meta/meta.dart';
 import '../entity/application.dart';
-import '../repository/application_repository.dart';
+import '../persistent/application_datastore.dart';
 import '../service/authentication_service.dart';
 import '../utility/validate.dart';
 import './src/request_handler.dart';
@@ -14,7 +14,7 @@ Map<String, dynamic> _serializeApplication(Application application) => {
 };
 
 class CreateApplication extends RequestHandler {
-  final ApplicationRepository _applicationRepository;
+  final ApplicationDatastore _applicationDatastore;
   final AuthenticationService _authenticationService;
 
   void call(HttpRequest request) {
@@ -25,16 +25,16 @@ class CreateApplication extends RequestHandler {
 
       final String name = payload['name'];
       final user = await _authenticationService.authenticate(request);
-      final application = await _applicationRepository.createApplication(name: name, requester: user);
+      final application = await _applicationDatastore.createApplication(name: name, requester: user);
 
       return _serializeApplication(application);
     }, statusCode: 201);
   }
   
   CreateApplication({
-    @required ApplicationRepository applicationRepository,
+    @required ApplicationDatastore applicationDatastore,
     @required AuthenticationService authenticationService,
   }):
-    _applicationRepository = applicationRepository,
+    _applicationDatastore = applicationDatastore,
     _authenticationService = authenticationService;
 }

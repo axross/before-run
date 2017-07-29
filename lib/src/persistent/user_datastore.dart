@@ -6,7 +6,7 @@ import '../entity/user.dart';
 import './src/deserialize.dart';
 import './src/resource_exception.dart';
 
-class UserRepository {
+class UserDatastore {
   final Pool _postgresConnectionPool;
 
   // Future<User> getUser(int userId) async {
@@ -66,6 +66,6 @@ class UserRepository {
     }
   }
 
-  UserRepository({@required Pool postgresConnectionPool}):
+  UserDatastore({@required Pool postgresConnectionPool}):
     _postgresConnectionPool = postgresConnectionPool;
 }

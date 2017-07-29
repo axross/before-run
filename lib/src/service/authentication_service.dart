@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:io';
 import 'package:meta/meta.dart';
 import '../entity/user.dart';
-import '../repository/session_repository.dart';
-import '../repository/user_repository.dart';
+import '../persistent/session_datastore.dart';
+import '../persistent/user_datastore.dart';
 import '../request_exception.dart';
 
 final RegExp _headerValueRegExp = new RegExp(r'^token [a-z0-9]{64}$');
@@ -17,8 +17,8 @@ class AuthenticationException extends UnauthorizedException {
 }
 
 class AuthenticationService {
-  final SessionRepository _sessionRepository;
-  final UserRepository _userRepository;
+  final SessionDatastore _sessionDatastore;
+  final UserDatastore _userDatastore;
 
   Future<User> authenticate(HttpRequest request) async {
     final headerValue = request.headers.value('authorization');
@@ -31,18 +31,18 @@ class AuthenticationService {
     final token = headerValue.substring(6);
 
     try {
-      final session = await _sessionRepository.getSessionByToken(token);
+      final session = await _sessionDatastore.getSessionByToken(token);
 
-      return await _userRepository.getUserBySession(session);
+      return await _userDatastore.getUserBySession(session);
     } on SessionNotFoundException catch (_) {
       throw new AuthenticationException('Authentication token `$token` is not a valid token.');
     }
   }
 
   AuthenticationService({
-    @required SessionRepository sessionRepository,
-    @required UserRepository userRepository,
+    @required SessionDatastore sessionDatastore,
+    @required UserDatastore userDatastore,
   }):
-    _sessionRepository = sessionRepository,
-    _userRepository = userRepository;
+    _sessionDatastore = sessionDatastore,
+    _userDatastore = userDatastore;
 }
