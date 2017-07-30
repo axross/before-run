@@ -56,6 +56,6 @@ class ApplicationDatastore {
     }
   }
   
-  ApplicationDatastore({@required postgresConnectionPool}):
+  ApplicationDatastore({@required Pool postgresConnectionPool}):
     _postgresConnectionPool = postgresConnectionPool;
 }
