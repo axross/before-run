@@ -24,9 +24,9 @@ class GetAllEnvironmentsOfApplication extends RequestHandler {
       final user = await _authenticationService.authenticate(request);
       
       // check permission to browse an application
-      await _applicationDatastore.getApplication(id: applicationId, requester: user);
+      final application = await _applicationDatastore.getApplication(id: applicationId, requester: user);
 
-      final environments = await _applicationEnvironmentDatastore.getAllEnvironments(applicationId: applicationId, requester: user);
+      final environments = await _applicationEnvironmentDatastore.getAllEnvironments(application: application, requester: user);
 
       return environments.map((environment) => _serializeApplicationEnvironment(environment)).toList();
     });
