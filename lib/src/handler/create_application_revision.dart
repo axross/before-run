@@ -7,13 +7,13 @@ import './src/request_handler.dart';
 import './src/serialize.dart';
 import '../request_exception.dart';
 
-class A extends BadRequestException {
+class InvalidContentTypeException extends BadRequestException {
   final HttpRequest request;
   final String message;
 
   String toString() => message;
 
-  A(this.request, {@required this.message});
+  InvalidContentTypeException(this.request, {@required this.message});
 }
 
 class CreateApplicationRevision extends RequestHandler {
@@ -26,7 +26,7 @@ class CreateApplicationRevision extends RequestHandler {
     handle(request, () async {
       if (request.headers.contentType == null ||
           request.headers.contentType.mimeType != 'application/zip') {
-        throw new A(request, message: 'This API requires a request as application/zip.');
+        throw new InvalidContentTypeException(request, message: 'This API requires a request as application/zip.');
       }
 
       final applicationId = _extractApplicationId(request.uri);
