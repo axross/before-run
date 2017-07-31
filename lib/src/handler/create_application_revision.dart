@@ -1,16 +1,11 @@
 import 'package:meta/meta.dart';
-import '../entity/application_revision.dart';
 import '../persistent/application_datastore.dart';
 import '../persistent/application_revision_file_storage.dart';
 import '../persistent/application_revision_datastore.dart';
 import '../service/authentication_service.dart';
 import './src/request_handler.dart';
+import './src/serialize.dart';
 import '../request_exception.dart';
-
-Map<String, dynamic> _serializeApplicationRevision(ApplicationRevision revision) => {
-  'id': revision.id,
-  'createdAt': revision.createdAt.toIso8601String(),
-};
 
 class A extends BadRequestException {
   final HttpRequest request;
@@ -49,8 +44,8 @@ class CreateApplicationRevision extends RequestHandler {
       await _applicationRevisionFileStorage.saveRevisionFile(revision, request);
 
       // wip: check
-      
-      return _serializeApplicationRevision(revision);
+
+      return serializeApplicationRevision(revision);
     }, statusCode: 201);
   }
 

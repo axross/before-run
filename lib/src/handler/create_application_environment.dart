@@ -1,18 +1,13 @@
 import 'package:meta/meta.dart';
-import '../entity/application_environment.dart';
 import '../persistent/application_environment_datastore.dart';
 import '../persistent/application_datastore.dart';
 import '../service/authentication_service.dart';
 import '../utility/validate.dart';
 import './src/request_handler.dart';
+import './src/serialize.dart';
 
 void _validatePayloadForCreate(Map<dynamic, dynamic> value) =>
   validate(value, containsPair('name', allOf(isNotNull, matches(new RegExp(r'^[a-z0-9_\-]{1,100}$')))));
-
-Map<String, dynamic> _serializeApplicationEnvironment(ApplicationEnvironment environment) => {
-  'id': environment.id,
-  'name': environment.name,
-};
 
 int _extractApplicationId(Uri url) =>
   int.parse(new RegExp(r'applications/([0-9]+)').firstMatch('$url').group(1), radix: 10);
@@ -37,7 +32,7 @@ class CreateApplicationEnvironment extends RequestHandler {
 
       final environment = await _applicationEnvironmentDatastore.createEnvironment(name: name, application: application, requester: user);
 
-      return _serializeApplicationEnvironment(environment);
+      return serializeApplicationEnvironment(environment);
     }, statusCode: 201);
   }
   

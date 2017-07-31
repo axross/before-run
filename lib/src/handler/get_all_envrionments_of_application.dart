@@ -1,14 +1,9 @@
 import 'package:meta/meta.dart';
-import '../entity/application_environment.dart';
 import '../persistent/application_environment_datastore.dart';
 import '../persistent/application_datastore.dart';
 import '../service/authentication_service.dart';
 import './src/request_handler.dart';
-
-Map<String, dynamic> _serializeApplicationEnvironment(ApplicationEnvironment environment) => {
-  'id': environment.id,
-  'name': environment.name,
-};
+import './src/serialize.dart';
 
 int _extractApplicationId(Uri url) =>
   int.parse(new RegExp(r'applications/([0-9]+)').firstMatch('$url').group(1), radix: 10);
@@ -28,7 +23,7 @@ class GetAllEnvironmentsOfApplication extends RequestHandler {
 
       final environments = await _applicationEnvironmentDatastore.getAllEnvironments(application: application, requester: user);
 
-      return environments.map((environment) => _serializeApplicationEnvironment(environment)).toList();
+      return environments.map((environment) => serializeApplicationEnvironment(environment)).toList();
     });
   }
 

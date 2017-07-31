@@ -1,13 +1,8 @@
 import 'package:meta/meta.dart';
-import '../entity/application.dart';
 import '../persistent/application_datastore.dart';
 import '../service/authentication_service.dart';
 import './src/request_handler.dart';
-
-Map<String, dynamic> _serializeApplication(Application application) => {
-  'id': application.id,
-  'name': application.name,
-};
+import './src/serialize.dart';
 
 class GetApplication extends RequestHandler {
   final ApplicationDatastore _applicationDatastore;
@@ -19,7 +14,7 @@ class GetApplication extends RequestHandler {
       final user = await _authenticationService.authenticate(request);
       final application = await _applicationDatastore.getApplication(id: id, requester: user);
 
-      return _serializeApplication(application);
+      return serializeApplication(application);
     });
   }
   
