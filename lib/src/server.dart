@@ -6,6 +6,7 @@ import 'package:meta/meta.dart';
 import './handler/authenticate_callback.dart';
 import './handler/authenticate.dart';
 import './handler/create_application.dart';
+import './handler/create_application_revision.dart';
 import './handler/create_application_environment.dart';
 import './handler/get_all_envrionments_of_application.dart';
 import './handler/get_application.dart';
@@ -13,6 +14,8 @@ import './handler/get_me.dart';
 import './handler/revoke_session.dart';
 import './persistent/application_datastore.dart';
 import './persistent/application_environment_datastore.dart';
+import './persistent/application_revision_datastore.dart';
+import './persistent/application_revision_file_storage.dart';
 import './persistent/github_access_token_datastore.dart';
 import './persistent/session_datastore.dart';
 import './persistent/user_github_datastore.dart';
@@ -25,6 +28,7 @@ Future<dynamic> startHttpServer({
   @required Uri postgresUri,
   @required String githubOauthClientId,
   @required String githubOauthClientSecret,
+  @required String gcpServiceAccountKeyjson,
 }) async {
   final httpServer = await HttpServer.bind(selfAddress, selfPort);
   final router = new Router(httpServer);
@@ -41,6 +45,13 @@ Future<dynamic> startHttpServer({
   );
   final applicationEnvironmentDatastore = new ApplicationEnvironmentDatastore(
     postgresConnectionPool: postgresConnectionPool,
+  );
+  final applicationRevisionDatastore = new ApplicationRevisionDatastore(
+    postgresConnectionPool: postgresConnectionPool,
+  );
+  final applicationRevisionFileStorage = await ApplicationRevisionFileStorage.createStorage(
+    serviceAccountKeyJson: gcpServiceAccountKeyjson,
+    projectName: 'before-run',
   );
   final githubAccessTokenDatastore = new GithubAccessTokenDatastore(
     oauthClientId: githubOauthClientId,
@@ -77,6 +88,12 @@ Future<dynamic> startHttpServer({
     applicationDatastore: applicationDatastore,
     authenticationService: authenticationService,
   );
+  final createApplicationRevision = new CreateApplicationRevision(
+    applicationDatastore: applicationDatastore,
+    applicationRevisionDatastore: applicationRevisionDatastore,
+    applicationRevisionFileStorage: applicationRevisionFileStorage,
+    authenticationService: authenticationService,
+  );
   final getAllEnvironmentsOfApplication = new GetAllEnvironmentsOfApplication(
     applicationEnvironmentDatastore: applicationEnvironmentDatastore,
     applicationDatastore: applicationDatastore,
@@ -105,7 +122,9 @@ Future<dynamic> startHttpServer({
     ..serve(new UrlPattern(r'/applications/([0-9]+)/environments'), method: 'GET')
       .listen(getAllEnvironmentsOfApplication)
     ..serve(new UrlPattern(r'/applications/([0-9]+)/environments'), method: 'POST')
-      .listen(createApplicationEnvironment);
+      .listen(createApplicationEnvironment)
+    ..serve(new UrlPattern(r'/applications/([0-9]+)/revisions'), method: 'POST')
+      .listen(createApplicationRevision);
   
   await postgresConnectionPool.start();
 }

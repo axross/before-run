@@ -2,6 +2,8 @@ name: before_run
 version: 0.0.0
 dependencies:
   angel_validate: 1.0.2+4
+  gcloud: 0.4.0
+  googleapis_auth: 0.2.3+6
   http: 0.11.3+13
   meta: 1.1.1
   postgresql: 0.3.4+1

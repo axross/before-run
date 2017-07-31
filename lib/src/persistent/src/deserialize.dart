@@ -1,6 +1,7 @@
 import 'package:postgresql/postgresql.dart' show Row;
 import '../../entity/application.dart';
 import '../../entity/application_environment.dart';
+import '../../entity/application_revision.dart';
 import '../../entity/session.dart';
 import '../../entity/user.dart';
 
@@ -8,6 +9,9 @@ Application deserializeToApplication(Row row) => new Application(id: row.id, nam
 
 ApplicationEnvironment deserializeToApplicationEnvironment(Row row) =>
   new ApplicationEnvironment(id: row.id, name: row.name);
+
+ApplicationRevision deserializeToApplicationRevision(Row row) =>
+  new ApplicationRevision(id: row.id, createdAt: row.created_at);
 
 Session deserializeToSession(Row row) => row == null ? null : new Session.fromToken(row.token);
 
