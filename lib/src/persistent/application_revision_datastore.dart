@@ -3,19 +3,21 @@ import 'package:meta/meta.dart';
 import 'package:postgresql/pool.dart' show Pool;
 import '../entity/application.dart';
 import '../entity/application_revision.dart';
+import '../entity/user.dart';
 import '../entity/uuid.dart';
 import './src/deserialize.dart';
 
 class ApplicationRevisionDatastore {
   final Pool _postgresConnectionPool;
 
-  Future<ApplicationRevision> createRevision({@required Application application}) async {
+  Future<ApplicationRevision> createRevision({@required Application application, @required User requester}) async {
     final connection = await _postgresConnectionPool.connect();
 
     try {
-      final row = await connection.query('insert into application_revisions (id, application_id, created_at) values (@id, @applicationId, @now) returning id, application_id, created_at;', {
+      final row = await connection.query('insert into application_revisions (id, application_id, creator_id, created_at) values (@id, @applicationId, @creatorId, @now) returning id, application_id, creator_id, created_at;', {
         'id': new Uuid.v4().toString(),
         'applicationId': application.id,
+        'creatorId': requester.id,
         'now': new DateTime.now(),
       }).single;
 

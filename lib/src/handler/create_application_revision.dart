@@ -38,7 +38,7 @@ class CreateApplicationRevision extends RequestHandler {
       final application = await _applicationDatastore.getApplication(id: applicationId, requester: user);
 
       // insert to rdb
-      final revision =  await _applicationRevisionDatastore.createRevision(application: application);
+      final revision = await _applicationRevisionDatastore.createRevision(application: application, requester: user);
 
       // post to storage
       await _applicationRevisionFileStorage.saveRevisionFile(revision, request);
