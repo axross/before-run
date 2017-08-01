@@ -11,6 +11,7 @@ import './handler/create_application_environment.dart';
 import './handler/get_all_envrionments_of_application.dart';
 import './handler/get_all_revisions_of_application.dart';
 import './handler/get_application.dart';
+import './handler/get_application_environment.dart';
 import './handler/get_me.dart';
 import './handler/revoke_session.dart';
 import './persistent/application_datastore.dart';
@@ -109,6 +110,11 @@ Future<dynamic> startHttpServer({
     applicationDatastore: applicationDatastore,
     authenticationService: authenticationService,
   );
+  final getApplicationEnvironment = new GetApplicationEnvironment(
+    applicationEnvironmentDatastore: applicationEnvironmentDatastore,
+    applicationDatastore: applicationDatastore,
+    authenticationService: authenticationService,
+  );
   final getMe = new GetMe(authenticationService: authenticationService);
   final revokeSession = new RevokeSession(sessionDatastore: sessionDatastore);
 
@@ -129,6 +135,8 @@ Future<dynamic> startHttpServer({
       .listen(getAllEnvironmentsOfApplication)
     ..serve(new UrlPattern(r'/applications/([0-9]+)/environments'), method: 'POST')
       .listen(createApplicationEnvironment)
+    ..serve(new UrlPattern(r'/applications/([0-9]+)/environments/([0-9]+)'), method: 'GET')
+      .listen(getApplicationEnvironment)
     ..serve(new UrlPattern(r'/applications/([0-9]+)/revisions'), method: 'GET')
       .listen(getAllRevisionsOfApplication)
     ..serve(new UrlPattern(r'/applications/([0-9]+)/revisions'), method: 'POST')
