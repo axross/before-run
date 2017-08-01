@@ -11,7 +11,7 @@ import './src/resource_exception.dart';
 class ApplicationEnvironmentDatastore {
   final Pool _postgresConnectionPool;
 
-  Future<List<ApplicationEnvironment>> getAllEnvironments({@required Application application, @required User requester}) async {
+  Future<List<ApplicationEnvironment>> getAllEnvironments({@required Application application}) async {
     final connection = await _postgresConnectionPool.connect();
 
     try {

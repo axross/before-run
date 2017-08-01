@@ -9,6 +9,7 @@ import './handler/create_application.dart';
 import './handler/create_application_revision.dart';
 import './handler/create_application_environment.dart';
 import './handler/get_all_envrionments_of_application.dart';
+import './handler/get_all_revisions_of_application.dart';
 import './handler/get_application.dart';
 import './handler/get_me.dart';
 import './handler/revoke_session.dart';
@@ -99,6 +100,11 @@ Future<dynamic> startHttpServer({
     applicationDatastore: applicationDatastore,
     authenticationService: authenticationService,
   );
+  final getAllRevisionsOfApplication = new GetAllRevisionsOfApplication(
+    applicationDatastore: applicationDatastore,
+    applicationRevisionDatastore: applicationRevisionDatastore,
+    authenticationService: authenticationService,
+  );
   final getApplication = new GetApplication(
     applicationDatastore: applicationDatastore,
     authenticationService: authenticationService,
@@ -123,6 +129,8 @@ Future<dynamic> startHttpServer({
       .listen(getAllEnvironmentsOfApplication)
     ..serve(new UrlPattern(r'/applications/([0-9]+)/environments'), method: 'POST')
       .listen(createApplicationEnvironment)
+    ..serve(new UrlPattern(r'/applications/([0-9]+)/revisions'), method: 'GET')
+      .listen(getAllRevisionsOfApplication)
     ..serve(new UrlPattern(r'/applications/([0-9]+)/revisions'), method: 'POST')
       .listen(createApplicationRevision);
   
