@@ -76,7 +76,6 @@ Future<dynamic> startHttpServer({
   final authenticateCallback = new AuthenticateCallback(
     githubClient: githubClient,
     sessionDatastore: sessionDatastore,
-    userGithubDatastore: userGithubDatastore,
     userDatastore: userDatastore,
   );
   final createApplication = new CreateApplication(
