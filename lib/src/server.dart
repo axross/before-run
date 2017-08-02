@@ -18,9 +18,8 @@ import './persistent/application_datastore.dart';
 import './persistent/application_environment_datastore.dart';
 import './persistent/application_revision_datastore.dart';
 import './persistent/application_revision_file_storage.dart';
-import './persistent/github_access_token_datastore.dart';
+import './persistent/github_client.dart';
 import './persistent/session_datastore.dart';
-import './persistent/user_github_datastore.dart';
 import './persistent/user_datastore.dart';
 import './service/authentication_service.dart';
 
@@ -55,14 +54,13 @@ Future<dynamic> startHttpServer({
     serviceAccountKeyJson: gcpServiceAccountKeyjson,
     projectName: 'before-run',
   );
-  final githubAccessTokenDatastore = new GithubAccessTokenDatastore(
+  final githubClient = new GithubClient(
     oauthClientId: githubOauthClientId,
     oauthClientSecret: githubOauthClientSecret,
   );
   final sessionDatastore = new SessionDatastore(
     postgresConnectionPool: postgresConnectionPool,
   );
-  final userGithubDatastore = new UserGithubDatastore();
   final userDatastore = new UserDatastore(
     postgresConnectionPool: postgresConnectionPool,
   );
@@ -76,7 +74,7 @@ Future<dynamic> startHttpServer({
   // request handlers
   final authenticate = new Authenticate(githubOauthClientId: githubOauthClientId);
   final authenticateCallback = new AuthenticateCallback(
-    githubAccessTokenDatastore: githubAccessTokenDatastore,
+    githubClient: githubClient,
     sessionDatastore: sessionDatastore,
     userGithubDatastore: userGithubDatastore,
     userDatastore: userDatastore,
