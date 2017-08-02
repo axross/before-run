@@ -24,7 +24,7 @@ class UserDatastore {
         throw new UserNotFoundException(token: session.token);
       }
 
-      return deserializeToUser(rows.first);
+      return deserializeToUser(rows.single);
     } finally {
       connection.close();
     }

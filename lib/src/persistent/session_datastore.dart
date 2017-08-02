@@ -23,7 +23,7 @@ class SessionDatastore {
         throw new SessionNotFoundException(token);
       }
 
-      return deserializeToSession(rows.first);
+      return deserializeToSession(rows.single);
     } finally {
       connection.close();
     }

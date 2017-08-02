@@ -38,7 +38,7 @@ class ApplicationEnvironmentDatastore {
         throw new ApplicationEnvironmentNotFoundException(applicationId: application.id, id: id);
       }
 
-      return deserializeToApplicationEnvironment(rows.first);
+      return deserializeToApplicationEnvironment(rows.single);
     } finally {
       connection.close();
     }
