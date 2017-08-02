@@ -5,9 +5,6 @@ import '../utility/validate.dart';
 import './src/request_handler.dart';
 import './src/serialize.dart';
 
-void _validatePayloadForCreate(Map<dynamic, dynamic> value) =>
-  validate(value, containsPair('name', allOf(isNotNull, matches(new RegExp(r'^[a-z0-9_\-]{1,100}$')))));
-
 class CreateApplication extends RequestHandler {
   final ApplicationDatastore _applicationDatastore;
   final AuthenticationService _authenticationService;
@@ -33,3 +30,6 @@ class CreateApplication extends RequestHandler {
     _applicationDatastore = applicationDatastore,
     _authenticationService = authenticationService;
 }
+
+void _validatePayloadForCreate(Map<dynamic, dynamic> value) =>
+  validate(value, containsPair('name', allOf(isNotNull, matches(new RegExp(r'^[a-z0-9_\-]{1,100}$')))));

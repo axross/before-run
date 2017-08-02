@@ -9,18 +9,6 @@ import './src/resource_exception.dart';
 class UserDatastore {
   final Pool _postgresConnectionPool;
 
-  // Future<User> getUser(int userId) async {
-  //   final connection = await _postgresConnectionPool.connect();
-
-  //   try {
-  //     final row = await connection.query('select id, username, email, name, profile_image_url from users where id = @id limit 1;').single;
-
-  //     return deserializeToUser(row);
-  //   } finally {
-  //     connection.close();
-  //   }
-  // }
-
   Future<User> getUserBySession(Session session) async {
     final connection = await _postgresConnectionPool.connect();
 

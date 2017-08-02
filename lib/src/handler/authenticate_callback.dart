@@ -1,14 +1,12 @@
 import 'package:meta/meta.dart';
-import '../persistent/github_access_token_datastore.dart';
+import '../persistent/github_client.dart';
 import '../persistent/session_datastore.dart';
-import '../persistent/user_github_datastore.dart';
 import '../persistent/user_datastore.dart';
 import './src/request_handler.dart';
 
 class AuthenticateCallback extends RequestHandler {
-  final GithubAccessTokenDatastore _githubAccessTokenDatastore;
+  final GithubClient _githubClient;
   final SessionDatastore _sessionDatastore;
-  final UserGithubDatastore _userGithubDatastore;
   final UserDatastore _userDatastore;
 
   void call(HttpRequest request) {
@@ -18,8 +16,8 @@ class AuthenticateCallback extends RequestHandler {
       // need to check fingerprint
       // final fingerprint = request.uri.queryParameters['state'];
 
-      final accessToken = await _githubAccessTokenDatastore.getAccessToken(code);
-      final user = await _userGithubDatastore.getUser(accessToken);
+      final accessToken = await _githubClient.getAccessToken(code);
+      final user = await _githubClient.getUser(accessToken);
       final createdUser = await _userDatastore.createOrUpdate(user);
       final session = await _sessionDatastore.createSession(createdUser);
 
@@ -28,13 +26,11 @@ class AuthenticateCallback extends RequestHandler {
   }
 
   AuthenticateCallback({
-    @required GithubAccessTokenDatastore githubAccessTokenDatastore,
+    @required GithubClient githubClient,
     @required SessionDatastore sessionDatastore,
-    @required UserGithubDatastore userGithubDatastore,
     @required UserDatastore userDatastore,
   }):
-    _githubAccessTokenDatastore = githubAccessTokenDatastore,
+    _githubClient = githubClient,
     _sessionDatastore = sessionDatastore,
-    _userGithubDatastore = userGithubDatastore,
     _userDatastore = userDatastore;
 }

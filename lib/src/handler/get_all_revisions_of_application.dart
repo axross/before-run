@@ -5,9 +5,6 @@ import '../service/authentication_service.dart';
 import './src/request_handler.dart';
 import './src/serialize.dart';
 
-int _extractApplicationId(Uri url) =>
-  int.parse(new RegExp(r'applications/([0-9]+)').firstMatch('$url').group(1), radix: 10);
-
 class GetAllRevisionsOfApplication extends RequestHandler {
   final ApplicationRevisionDatastore _applicationRevisionDatastore;
   final ApplicationDatastore _applicationDatastore;
@@ -36,3 +33,6 @@ class GetAllRevisionsOfApplication extends RequestHandler {
     _applicationDatastore = applicationDatastore,
     _authenticationService = authenticationService;
 }
+
+int _extractApplicationId(Uri url) =>
+  int.parse(new RegExp(r'applications/([0-9]+)').firstMatch('$url').group(1), radix: 10);

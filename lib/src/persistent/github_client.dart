@@ -6,29 +6,6 @@ import '../entity/user.dart' show User;
 import '../entity/uuid.dart' show Uuid;
 import '../utility/validate.dart';
 
-void _validatePayloadForUser(Map<dynamic, dynamic> value) =>
-  validate(value, allOf(
-    containsPair('id', allOf(isNotNull, isPositive)),
-    containsPair('login', allOf(isNotNull, const isInstanceOf<String>(), isNotEmpty)),
-    containsPair('email', allOf(isNotNull, isEmail)),
-    containsPair('name', isNotNull),
-    containsPair('avatar_url', allOf(isNotNull, isUrl)),
-  ));
-
-User _decodeToUser(String json) {
-  final decoded = JSON.decode(json);
-  
-  _validatePayloadForUser(decoded);
-
-  return new User(
-    id: decoded['id'],
-    username: decoded['login'],
-    email: decoded['email'],
-    name: decoded['name'],
-    profileImageUrl: decoded['avatar_url'],
-  );
-}
-
 class GithubClient {
   final String _oauthClientId;
   final String _oauthClientSecret;
@@ -55,10 +32,33 @@ class GithubClient {
       'authorization': 'token $accessToken',
     });
 
-    return _decodeToUser(response.body);
+    return _deserializeToUser(response.body);
   }
 
   GithubClient({@required String oauthClientId, @required String oauthClientSecret}):
     _oauthClientId = oauthClientId,
     _oauthClientSecret = oauthClientSecret;
+}
+
+void _validatePayloadForUser(Map<dynamic, dynamic> value) =>
+  validate(value, allOf(
+    containsPair('id', allOf(isNotNull, isPositive)),
+    containsPair('login', allOf(isNotNull, const isInstanceOf<String>(), isNotEmpty)),
+    containsPair('email', allOf(isNotNull, isEmail)),
+    containsPair('name', isNotNull),
+    containsPair('avatar_url', allOf(isNotNull, isUrl)),
+  ));
+
+User _deserializeToUser(String json) {
+  final decoded = JSON.decode(json);
+  
+  _validatePayloadForUser(decoded);
+
+  return new User(
+    id: decoded['id'],
+    username: decoded['login'],
+    email: decoded['email'],
+    name: decoded['name'],
+    profileImageUrl: decoded['avatar_url'],
+  );
 }

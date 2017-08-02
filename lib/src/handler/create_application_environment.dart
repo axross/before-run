@@ -6,12 +6,6 @@ import '../utility/validate.dart';
 import './src/request_handler.dart';
 import './src/serialize.dart';
 
-void _validatePayloadForCreate(Map<dynamic, dynamic> value) =>
-  validate(value, containsPair('name', allOf(isNotNull, matches(new RegExp(r'^[a-z0-9_\-]{1,100}$')))));
-
-int _extractApplicationId(Uri url) =>
-  int.parse(new RegExp(r'applications/([0-9]+)').firstMatch('$url').group(1), radix: 10);
-
 class CreateApplicationEnvironment extends RequestHandler {
   final ApplicationEnvironmentDatastore _applicationEnvironmentDatastore;
   final ApplicationDatastore _applicationDatastore;
@@ -45,3 +39,9 @@ class CreateApplicationEnvironment extends RequestHandler {
     _applicationDatastore = applicationDatastore,
     _authenticationService = authenticationService;
 }
+
+void _validatePayloadForCreate(Map<dynamic, dynamic> value) =>
+  validate(value, containsPair('name', allOf(isNotNull, matches(new RegExp(r'^[a-z0-9_\-]{1,100}$')))));
+
+int _extractApplicationId(Uri url) =>
+  int.parse(new RegExp(r'applications/([0-9]+)').firstMatch('$url').group(1), radix: 10);
