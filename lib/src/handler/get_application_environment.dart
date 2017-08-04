@@ -36,7 +36,7 @@ class GetApplicationEnvironment extends RequestHandler {
 }
 
 int _extractApplicationId(Uri url) =>
-  int.parse(new RegExp(r'applications/([0-9]+)').firstMatch('$url').group(1), radix: 10);
+  int.parse(new RegExp(r'applications/([0-9]+)').firstMatch('$url').group(1));
 
 int _extractApplicationEnvironmentId(Uri url) =>
-  int.parse(new RegExp(r'environments/([0-9]+)').firstMatch('$url').group(1), radix: 10);
+  int.parse(new RegExp(r'environments/([0-9]+)').firstMatch('$url').group(1));

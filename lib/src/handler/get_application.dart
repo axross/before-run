@@ -10,7 +10,7 @@ class GetApplication extends RequestHandler {
 
   void call(HttpRequest request) {
     handle(request, () async {
-      final id = int.parse(request.uri.path.split('/').last, radix: 10);
+      final id = int.parse(request.uri.path.split('/').last);
       final user = await _authenticationService.authenticate(request);
       final application = await _applicationDatastore.getApplication(id: id, requester: user);
 
