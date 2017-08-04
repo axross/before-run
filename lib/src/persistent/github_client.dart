@@ -43,7 +43,7 @@ class GithubClient {
 void _validatePayloadForUser(Map<dynamic, dynamic> value) =>
   validate(value, allOf(
     containsPair('id', allOf(isNotNull, isPositive)),
-    containsPair('login', allOf(isNotNull, const isInstanceOf<String>(), isNotEmpty)),
+    containsPair('login', isValidString),
     containsPair('email', allOf(isNotNull, isEmail)),
     containsPair('name', isNotNull),
     containsPair('avatar_url', allOf(isNotNull, isUrl)),

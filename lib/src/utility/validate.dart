@@ -26,6 +26,10 @@ void validate(dynamic input, Matcher matcher, {String key = 'value'}) {
   return input;
 }
 
+Matcher isString = const isInstanceOf<String>();
+
+Matcher isValidString = allOf(isString, isNotNull, isNotEmpty);
+
 Matcher isEmail = predicate(
   (dynamic value) => value is String && _emailRegExp.hasMatch(value),
   'a valid e-mail',
