@@ -8,7 +8,7 @@ final _padding = [
   0, 0, 0, 0, 0, 0, 0, 0,
 ];
 
-Uint8List stringToUint8List(String value) =>
+Uint8List stringTo256bitUint8List(String value) =>
   new Uint8List.fromList(
     (UTF8.encode(value).toList()
       ..addAll(_padding)

@@ -5,7 +5,7 @@ import 'package:postgresql/postgresql.dart' show Connection;
 import 'package:pointycastle/pointycastle.dart' show BlockCipher, KeyParameter;
 import '../entity/aws_s3.dart';
 import '../entity/uuid.dart';
-import '../utility/string_to_uint8list.dart';
+import '../utility/string_to_256bit_uint8list.dart';
 import './src/deserialize.dart';
 
 class ApplicationBucketDatastore {
@@ -21,8 +21,8 @@ class ApplicationBucketDatastore {
       'type': 'AWS_S3',
       'payload': {
         'bucketName': bucketName,
-        'accessKeyId': BASE64.encode(_encrypter.process(stringToUint8List(accessKeyId))),
-        'secretAccessKey': BASE64.encode(_encrypter.process(stringToUint8List(secretAccessKey))),
+        'accessKeyId': BASE64.encode(_encrypter.process(stringTo256bitUint8List(accessKeyId))),
+        'secretAccessKey': BASE64.encode(_encrypter.process(stringTo256bitUint8List(secretAccessKey))),
       },
       'now': new DateTime.now(),
     }).single;
@@ -32,5 +32,5 @@ class ApplicationBucketDatastore {
 
   ApplicationBucketDatastore({@required String encryptionSecretKey}):
     _encrypter = new BlockCipher('AES')
-      ..init(true, new KeyParameter(stringToUint8List(encryptionSecretKey)));
+      ..init(true, new KeyParameter(stringTo256bitUint8List(encryptionSecretKey)));
 }
