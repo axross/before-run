@@ -14,6 +14,13 @@ abstract class ApplicationDestinationType {
   String toJson();
 
   factory ApplicationDestinationType._(String value) => new _ApplicationDestinationType(value);
+  factory ApplicationDestinationType.fromString(String value) {
+    if (value == ApplicationDestinationType.AwsCloudfront) {
+      return ApplicationDestinationType.AwsCloudfront;
+    } else {
+      throw new TypeError();
+    }
+  }
 }
 
 class _ApplicationDestinationType implements ApplicationDestinationType {

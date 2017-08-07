@@ -1,6 +1,6 @@
 import 'dart:async' show Future;
 import 'package:meta/meta.dart';
-import 'package:postgresql/pool.dart' show Pool;
+import 'package:postgresql/postgresql.dart' show Connection;
 import '../entity/application.dart';
 import '../entity/application_revision.dart';
 import '../entity/user.dart';
@@ -8,39 +8,31 @@ import '../entity/uuid.dart';
 import './src/deserialize.dart';
 
 class ApplicationRevisionDatastore {
-  final Pool _postgresConnectionPool;
+  Future<Iterable<ApplicationRevision>> getAll(Connection connection, {@required Application application}) async {
+    final rows = await connection.query('select id, application_id, creator_id, created_at from application_revisions where application_id = @applicationId;', {
+      'applicationId': application.id,
+    });
 
-  Future<List<ApplicationRevision>> getAllRevisions({@required Application application}) async {
-    final connection = await _postgresConnectionPool.connect();
-
-    try {
-      final rows = await connection.query('select id, application_id, creator_id, created_at from application_revisions where application_id = @applicationId;', {
-        'applicationId': application.id,
-      }).toList();
-
-      return rows.map((row) => deserializeToApplicationRevision(row)).toList();
-    } finally {
-      connection.close();
-    }
+    return rows.map<ApplicationRevision>((row) => deserializeToApplicationRevision(row));
   }
 
-  Future<ApplicationRevision> createRevision({@required Application application, @required User requester}) async {
-    final connection = await _postgresConnectionPool.connect();
+  Future<ApplicationRevision> create(Connection connection, {@required Application application, @required User requester}) async {
+    final row = await connection.query('insert into application_revisions (id, application_id, creator_id, created_at) values (@id, @applicationId, @creatorId, @now) returning id, application_id, creator_id, created_at;', {
+      'id': new Uuid.v4().toString(),
+      'applicationId': application.id,
+      'creatorId': requester.id,
+      'now': new DateTime.now(),
+    }).single;
 
-    try {
-      final row = await connection.query('insert into application_revisions (id, application_id, creator_id, created_at) values (@id, @applicationId, @creatorId, @now) returning id, application_id, creator_id, created_at;', {
-        'id': new Uuid.v4().toString(),
-        'applicationId': application.id,
-        'creatorId': requester.id,
-        'now': new DateTime.now(),
-      }).single;
-
-      return deserializeToApplicationRevision(row);
-    } finally {
-      connection.close();
-    }
+    return deserializeToApplicationRevision(row);
   }
+}
 
-  ApplicationRevisionDatastore({@required Pool postgresConnectionPool}):
-    _postgresConnectionPool = postgresConnectionPool;
+class ApplicationRevisionCreationFailureException implements Exception {
+  final int applicationId;
+  final User requester;
+
+  String toString() => 'Creating an application revision for an application (id: "${applicationId}") is failed.';
+
+  ApplicationRevisionCreationFailureException({@required this.applicationId, @required this.requester});
 }

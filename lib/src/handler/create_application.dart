@@ -1,35 +1,44 @@
+import 'dart:io' show HttpRequest;
 import 'package:meta/meta.dart';
-import '../persistent/application_datastore.dart';
-import '../service/authentication_service.dart';
+import '../usecase/application_usecase.dart';
+import '../usecase/authentication_usecase.dart';
 import '../utility/validate.dart';
-import './src/request_handler.dart';
+import './src/extract_session_token.dart';
+import './src/parse_payload_as_json.dart';
+import './src/respond_in_zone.dart';
 import './src/serialize.dart';
 
-class CreateApplication extends RequestHandler {
-  final ApplicationDatastore _applicationDatastore;
-  final AuthenticationService _authenticationService;
+class CreateApplication {
+  final ApplicationUsecase _applicationUsecase;
+  final AuthenticationUsecase _authenticationUsecase;
 
   void call(HttpRequest request) {
-    handle(request, () async {
-      final payload = await getPayloadAsJson(request);
+    respondInZone(request, () async {
+      final payload = await parsePayloadAsJson(request);
 
-      _validatePayloadForCreate(payload);
+      _validate(payload);
 
       final String name = payload['name'];
-      final user = await _authenticationService.authenticate(request);
-      final application = await _applicationDatastore.createApplication(name: name, requester: user);
+      final user = await _authenticationUsecase.authenticate(extractSessionToken(request.headers));
+      final application = await _applicationUsecase.create(name: name, requester: user);
 
       return serializeApplication(application);
-    }, statusCode: 201);
+    }, {
+      InvalidHttpRequestException: 400,
+      ValidationException: 400,
+      AuthenticationException: 401,
+      NoAutorizationException: 401,
+      ApplicationConflictException: 409,
+    }, 201);
   }
   
   CreateApplication({
-    @required ApplicationDatastore applicationDatastore,
-    @required AuthenticationService authenticationService,
+    @required ApplicationUsecase applicationUsecase,
+    @required AuthenticationUsecase authenticationUsecase,
   }):
-    _applicationDatastore = applicationDatastore,
-    _authenticationService = authenticationService;
+    _applicationUsecase = applicationUsecase,
+    _authenticationUsecase = authenticationUsecase;
 }
 
-void _validatePayloadForCreate(Map<dynamic, dynamic> value) =>
+void _validate(Map<dynamic, dynamic> value) =>
   validate(value, containsPair('name', allOf(isNotNull, matches(new RegExp(r'^[a-z0-9_\-]{1,100}$')))));

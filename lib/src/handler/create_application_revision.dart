@@ -1,13 +1,45 @@
+import 'dart:io' show HttpRequest;
 import 'package:meta/meta.dart';
-import '../persistent/application_datastore.dart';
-import '../persistent/application_revision_file_storage.dart';
-import '../persistent/application_revision_datastore.dart';
-import '../service/authentication_service.dart';
-import './src/request_handler.dart';
+import '../usecase/application_revision_usecase.dart';
+import '../usecase/authentication_usecase.dart';
+import './src/extract_session_token.dart';
+import './src/respond_in_zone.dart';
 import './src/serialize.dart';
-import '../request_exception.dart';
 
-class InvalidContentTypeException extends BadRequestException {
+class CreateApplicationRevision {
+  final ApplicationRevisionUsecase _applicationRevisionUsecase;
+  final AuthenticationUsecase _authenticationUsecase;
+
+  void call(HttpRequest request) {
+    respondInZone(request, () async {
+      _validateHeaders(request);
+
+      final applicationId = _extractApplicationId(request.uri);
+      final user = await _authenticationUsecase.authenticate(extractSessionToken(request.headers));
+      final revision = await _applicationRevisionUsecase.create(
+        applicationId: applicationId,
+        request: request,
+        requester: user,
+      );
+
+      return serializeApplicationRevision(revision);
+    }, {
+      InvalidContentTypeException: 400,
+      AuthenticationException: 401,
+      NoAutorizationException: 401,
+      ApplicationRevisionCreationFailureException: 409,
+    }, 201);
+  }
+
+  CreateApplicationRevision({
+    @required ApplicationRevisionUsecase applicationRevisionUsecase,
+    @required AuthenticationUsecase authenticationUsecase,
+  }):
+    _applicationRevisionUsecase = applicationRevisionUsecase,
+    _authenticationUsecase = authenticationUsecase;
+}
+
+class InvalidContentTypeException {
   final HttpRequest request;
   final String message;
 
@@ -16,49 +48,11 @@ class InvalidContentTypeException extends BadRequestException {
   InvalidContentTypeException(this.request, {@required this.message});
 }
 
-class CreateApplicationRevision extends RequestHandler {
-  final ApplicationDatastore _applicationDatastore;
-  final ApplicationRevisionDatastore _applicationRevisionDatastore;
-  final AuthenticationService _authenticationService;
-  final ApplicationRevisionFileStorage _applicationRevisionFileStorage;
-
-  void call(HttpRequest request) {
-    handle(request, () async {
-      if (request.headers.contentType == null ||
-          request.headers.contentType.mimeType != 'application/zip') {
-        throw new InvalidContentTypeException(request, message: 'This API requires a request as application/zip.');
-      }
-
-      final applicationId = _extractApplicationId(request.uri);
-
-      // authenticate
-      final user = await _authenticationService.authenticate(request);
-
-      // get application
-      final application = await _applicationDatastore.getApplication(id: applicationId, requester: user);
-
-      // insert to rdb
-      final revision = await _applicationRevisionDatastore.createRevision(application: application, requester: user);
-
-      // post to storage
-      await _applicationRevisionFileStorage.saveRevisionFile(revision, request);
-
-      // wip: check
-
-      return serializeApplicationRevision(revision);
-    }, statusCode: 201);
+void _validateHeaders(HttpRequest request) {
+  if (request.headers.contentType == null ||
+      request.headers.contentType.mimeType != 'application/zip') {
+    throw new InvalidContentTypeException(request, message: 'This API requires a request as application/zip.');
   }
-
-  CreateApplicationRevision({
-    @required ApplicationDatastore applicationDatastore,
-    @required ApplicationRevisionDatastore applicationRevisionDatastore,
-    @required AuthenticationService authenticationService,
-    @required ApplicationRevisionFileStorage applicationRevisionFileStorage,
-  }):
-    _applicationDatastore = applicationDatastore,
-    _applicationRevisionDatastore = applicationRevisionDatastore,
-    _authenticationService = authenticationService,
-    _applicationRevisionFileStorage = applicationRevisionFileStorage;
 }
 
 int _extractApplicationId(Uri url) =>

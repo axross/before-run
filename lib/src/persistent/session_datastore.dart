@@ -1,67 +1,48 @@
 import 'dart:async';
-import 'package:meta/meta.dart';
-import 'package:postgresql/pool.dart' show Pool;
+import 'package:postgresql/postgresql.dart' show Connection;
 import '../entity/session.dart';
 import '../entity/user.dart';
 import './src/deserialize.dart';
-import './src/resource_exception.dart';
-
-export './src/resource_exception.dart' show SessionNotFoundException;
 
 class SessionDatastore {
-  final Pool _postgresConnectionPool;
+  Future<Session> getByToken(Connection connection, String token) async {
+    final rows = await connection.query('select token from sessions where token = @token limit 1;', {
+      'token': token,
+    }).toList();
 
-  Future<Session> getSessionByToken(String token) async {
-    final connection = await _postgresConnectionPool.connect();
-
-    try {
-      final rows = await connection.query('select token from sessions where token = @token limit 1;', {
-        'token': token,
-      }).toList();
-
-      if (rows.isEmpty) {
-        throw new SessionNotFoundException(token);
-      }
-
-      return deserializeToSession(rows.single);
-    } finally {
-      connection.close();
+    if (rows.isEmpty) {
+      throw new SessionNotFoundException(token);
     }
+
+    return deserializeToSession(rows.single);
   }
 
-  Future<Session> createSession(User user) async {
-    final connection = await _postgresConnectionPool.connect();
+  Future<Session> create(Connection connection, User user) async {
+    final temporarySession = new Session.generateWithUser(user);
+    final row = await connection.query('insert into sessions (token, user_id, created_at) values (@token, @userId, @now) returning token;', {
+      'token': temporarySession.token,
+      'userId': user.id,
+      'now': new DateTime.now(),
+    }).single;
 
-    try {
-      final temporarySession = new Session.generateWithUser(user);
-      final row = await connection.query('insert into sessions (token, user_id, created_at) values (@token, @userId, @now) returning token;', {
-        'token': temporarySession.token,
-        'userId': user.id,
-        'now': new DateTime.now(),
-      }).single;
-
-      return deserializeToSession(row);
-    } finally {
-      connection.close();
-    }
+    return deserializeToSession(row);
   }
 
-  Future<dynamic> deleteSession(String token) async {
-    final connection = await _postgresConnectionPool.connect();
+  Future<dynamic> delete(Connection connection, String token) async {
+    final affectedRows = await connection.execute('delete from sessions where token = @token;', {
+      'token': token,
+    });
 
-    try {
-      final affectedRows = await connection.execute('delete from sessions where token = @token;', {
-        'token': token,
-      });
-
-      if (affectedRows == 0) {
-        throw new SessionNotFoundException(token);
-      }
-    } finally {
-      connection.close();
+    if (affectedRows == 0) {
+      throw new SessionNotFoundException(token);
     }
   }
+}
 
-  SessionDatastore({@required Pool postgresConnectionPool}):
-    _postgresConnectionPool = postgresConnectionPool;
+class SessionNotFoundException implements Exception {
+  final String token;
+
+  String toString() => 'Authentication token "$token" is not a valid token.';
+
+  SessionNotFoundException(this.token);
 }

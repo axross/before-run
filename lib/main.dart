@@ -8,6 +8,7 @@ Future<dynamic> main() async {
   await startHttpServer(
     selfAddress: InternetAddress.LOOPBACK_IP_V4,
     selfPort: 8000,
+    encryptionSecretKey: '',
     postgresUri: new Uri(
       scheme: 'postgres',
       host: 'localhost',

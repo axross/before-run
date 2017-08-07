@@ -1,38 +1,43 @@
+import 'dart:io' show HttpRequest;
 import 'package:meta/meta.dart';
-import '../persistent/application_environment_datastore.dart';
-import '../persistent/application_datastore.dart';
-import '../service/authentication_service.dart';
-import './src/request_handler.dart';
+import '../usecase/application_environment_usecase.dart';
+import '../usecase/authentication_usecase.dart';
+import './src/extract_session_token.dart';
+import './src/respond_in_zone.dart';
 import './src/serialize.dart';
 
-class GetApplicationEnvironment extends RequestHandler {
-  final ApplicationEnvironmentDatastore _applicationEnvironmentDatastore;
-  final ApplicationDatastore _applicationDatastore;
-  final AuthenticationService _authenticationService;
+class GetApplicationEnvironment {
+  final ApplicationEnvironmentUsecase _applicationEnvironmentUsecase;
+  final AuthenticationUsecase _authenticationUsecase;
 
   void call(HttpRequest request) {
-    handle(request, () async {
+    respondInZone(request, () async {
       final applicationId = _extractApplicationId(request.uri);
-      final environmentId = _extractApplicationEnvironmentId(request.uri);
-      final user = await _authenticationService.authenticate(request);
-
-      // check permission to browse an application
-      final application = await _applicationDatastore.getApplication(id: applicationId, requester: user);
-
-      final environment = await _applicationEnvironmentDatastore.getEnvironment(id: environmentId, application: application, requester: user);
+      final applicationEnvironmentId = _extractApplicationEnvironmentId(request.uri);
+      final user = await _authenticationUsecase.authenticate(extractSessionToken(request.headers));
+      final environment = await _applicationEnvironmentUsecase.getById(
+        applicationEnvironmentId: applicationEnvironmentId,
+        applicationId: applicationId,
+        requester: user,
+      );
 
       return serializeApplicationEnvironment(environment);
+    }, {
+      AuthenticationException: 401,
+      NoAutorizationException: 401,
+      ApplicationForbiddenException: 403,
+      ApplicationEnvironmentForbiddenException: 403,
+      ApplicationNotFoundException: 404,
+      ApplicationEnvironmentNotFoundException: 404,
     });
   }
   
   GetApplicationEnvironment({
-    @required ApplicationEnvironmentDatastore applicationEnvironmentDatastore,
-    @required ApplicationDatastore applicationDatastore,
-    @required AuthenticationService authenticationService,
+    @required ApplicationEnvironmentUsecase applicationEnvironmentUsecase,
+    @required AuthenticationUsecase authenticationUsecase,
   }):
-    _applicationEnvironmentDatastore = applicationEnvironmentDatastore,
-    _applicationDatastore = applicationDatastore,
-    _authenticationService = authenticationService;
+    _applicationEnvironmentUsecase = applicationEnvironmentUsecase,
+    _authenticationUsecase = authenticationUsecase;
 }
 
 int _extractApplicationId(Uri url) =>

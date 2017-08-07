@@ -1,20 +1,26 @@
+import 'dart:io' show HttpRequest;
 import 'package:meta/meta.dart';
-import '../persistent/session_datastore.dart';
-import './src/request_handler.dart';
+import '../usecase/authentication_usecase.dart';
+import './src/respond_in_zone.dart';
 
-class RevokeSession extends RequestHandler {
-  final SessionDatastore _sessionDatastore;
+class RevokeSession {
+  final AuthenticationUsecase _authenticationUsecase;
 
   void call(HttpRequest request) {
-    handle(request, () async {
-      final token = request.uri.path.split('/').last;
+    respondInZone(request, () async {
+      final token = _extractSessionToken(request.uri);
 
-      await _sessionDatastore.deleteSession(token);
+      await _authenticationUsecase.deauthenticate(token);
 
-      return {};
+      return '';
+    }, {
+      SessionNotFoundException: 404,
     });
   }
 
-  RevokeSession({@required SessionDatastore sessionDatastore}):
-    _sessionDatastore = sessionDatastore;
+  RevokeSession({@required AuthenticationUsecase authenticationUsecase}):
+    _authenticationUsecase = authenticationUsecase;
 }
+
+String _extractSessionToken(Uri url) =>
+  new RegExp(r'sessions/([0-9a-f]+)').firstMatch('$url').group(1);

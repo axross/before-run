@@ -1,8 +1,8 @@
+import 'dart:io' show HttpRequest;
 import 'package:meta/meta.dart';
 import '../entity/uuid.dart';
-import './src/request_handler.dart';
 
-class Authenticate extends RequestHandler {
+class SignIn {
   final String _githubOauthClientId;
 
   void call(HttpRequest request) {
@@ -13,6 +13,6 @@ class Authenticate extends RequestHandler {
     }));
   }
 
-  Authenticate({@required String githubOauthClientId}):
+  SignIn({@required String githubOauthClientId}):
     _githubOauthClientId = githubOauthClientId;
 }

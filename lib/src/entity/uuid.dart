@@ -4,6 +4,7 @@ class Uuid {
   final List<int> buffer;
 
   String toString() => new DartUuid.Uuid().unparse(buffer);
+  String toJson() => toString();
 
   @override
   int get hashCode => buffer.fold(17, (int previous, int current) => 37 * previous + current);

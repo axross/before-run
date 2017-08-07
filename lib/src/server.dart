@@ -3,8 +3,6 @@ import 'dart:io' show HttpServer, InternetAddress;
 import 'package:postgresql/pool.dart';
 import 'package:route/server.dart';
 import 'package:meta/meta.dart';
-import './handler/authenticate_callback.dart';
-import './handler/authenticate.dart';
 import './handler/create_application.dart';
 import './handler/create_application_revision.dart';
 import './handler/create_application_environment.dart';
@@ -14,18 +12,28 @@ import './handler/get_application.dart';
 import './handler/get_application_environment.dart';
 import './handler/get_me.dart';
 import './handler/revoke_session.dart';
+import './handler/sign_in.dart';
+import './handler/sign_in_callback.dart';
+import './persistent/application_bucket_datastore.dart';
 import './persistent/application_datastore.dart';
+import './persistent/application_destination_datastore.dart';
 import './persistent/application_environment_datastore.dart';
 import './persistent/application_revision_datastore.dart';
 import './persistent/application_revision_file_storage.dart';
+import './persistent/aws_cloudfront_client.dart';
+import './persistent/aws_s3_client.dart';
 import './persistent/github_client.dart';
 import './persistent/session_datastore.dart';
 import './persistent/user_datastore.dart';
-import './service/authentication_service.dart';
+import './usecase/application_environment_usecase.dart';
+import './usecase/application_revision_usecase.dart';
+import './usecase/application_usecase.dart';
+import './usecase/authentication_usecase.dart';
 
 Future<dynamic> startHttpServer({
   @required InternetAddress selfAddress,
   @required int selfPort,
+  @required String encryptionSecretKey,
   @required Uri postgresUri,
   @required String githubOauthClientId,
   @required String githubOauthClientSecret,
@@ -34,92 +42,99 @@ Future<dynamic> startHttpServer({
   final httpServer = await HttpServer.bind(selfAddress, selfPort);
   final router = new Router(httpServer);
 
-  final postgresConnectionPool = new Pool(
+  final postgresqlConnectionPool = new Pool(
     postgresUri.toString(),
     minConnections: 1,
     maxConnections: 5,
   );
 
   // repositories
-  final applicationDatastore = new ApplicationDatastore(
-    postgresConnectionPool: postgresConnectionPool,
+  final applicationBucketDatastore = new ApplicationBucketDatastore(encryptionSecretKey: encryptionSecretKey);
+  final applicationDatastore = new ApplicationDatastore();
+  final applicationDestinationDatastore = new ApplicationDestinationDatastore(
+    encryptionSecretKey: encryptionSecretKey,
   );
-  final applicationEnvironmentDatastore = new ApplicationEnvironmentDatastore(
-    postgresConnectionPool: postgresConnectionPool,
-  );
-  final applicationRevisionDatastore = new ApplicationRevisionDatastore(
-    postgresConnectionPool: postgresConnectionPool,
-  );
+  final applicationEnvironmentDatastore = new ApplicationEnvironmentDatastore();
+  final applicationRevisionDatastore = new ApplicationRevisionDatastore();
   final applicationRevisionFileStorage = await ApplicationRevisionFileStorage.createStorage(
     serviceAccountKeyJson: gcpServiceAccountKeyjson,
     projectName: 'before-run',
   );
+  final awsCloudfrontClient = new AwsCloudfrontClient();
+  final awsS3Client = new AwsS3Client();
   final githubClient = new GithubClient(
     oauthClientId: githubOauthClientId,
     oauthClientSecret: githubOauthClientSecret,
   );
-  final sessionDatastore = new SessionDatastore(
-    postgresConnectionPool: postgresConnectionPool,
-  );
-  final userDatastore = new UserDatastore(
-    postgresConnectionPool: postgresConnectionPool,
-  );
+  final sessionDatastore = new SessionDatastore();
+  final userDatastore = new UserDatastore();
 
-  // services
-  final authenticationService = new AuthenticationService(
-    userDatastore: userDatastore,
-    sessionDatastore: sessionDatastore,
-  );
-
-  // request handlers
-  final authenticate = new Authenticate(githubOauthClientId: githubOauthClientId);
-  final authenticateCallback = new AuthenticateCallback(
-    githubClient: githubClient,
-    sessionDatastore: sessionDatastore,
-    userDatastore: userDatastore,
-  );
-  final createApplication = new CreateApplication(
+  // use cases
+  final applicationEnvironmentUsecase = new ApplicationEnvironmentUsecase(
+    applicationBucketDatastore: applicationBucketDatastore,
     applicationDatastore: applicationDatastore,
-    authenticationService: authenticationService,
-  );
-  final createApplicationEnvironment = new CreateApplicationEnvironment(
+    applicationDestinationDatastore: applicationDestinationDatastore,
     applicationEnvironmentDatastore: applicationEnvironmentDatastore,
-    applicationDatastore: applicationDatastore,
-    authenticationService: authenticationService,
+    awsCloudfrontClient: awsCloudfrontClient,
+    awsS3Client: awsS3Client,
+    postgresqlConnectionPool: postgresqlConnectionPool,
   );
-  final createApplicationRevision = new CreateApplicationRevision(
+  final applicationRevisionUsecase = new ApplicationRevisionUsecase(
     applicationDatastore: applicationDatastore,
     applicationRevisionDatastore: applicationRevisionDatastore,
     applicationRevisionFileStorage: applicationRevisionFileStorage,
-    authenticationService: authenticationService,
+    postgresqlConnectionPool: postgresqlConnectionPool,
+  );
+  final applicationUsecase = new ApplicationUsecase(
+    applicationDatastore: applicationDatastore,
+    postgresqlConnectionPool: postgresqlConnectionPool,
+  );
+  final authenticationUsecase = new AuthenticationUsecase(
+    githubClient: githubClient,
+    postgresqlConnectionPool: postgresqlConnectionPool,
+    sessionDatastore: sessionDatastore,
+    userDatastore: userDatastore,
+  );
+
+  // request handlers
+  final createApplication = new CreateApplication(
+    applicationUsecase: applicationUsecase,
+    authenticationUsecase: authenticationUsecase,
+  );
+  final createApplicationEnvironment = new CreateApplicationEnvironment(
+    applicationEnvironmentUsecase: applicationEnvironmentUsecase,
+    authenticationUsecase: authenticationUsecase,
+  );
+  final createApplicationRevision = new CreateApplicationRevision(
+    applicationRevisionUsecase: applicationRevisionUsecase,
+    authenticationUsecase: authenticationUsecase,
   );
   final getAllEnvironmentsOfApplication = new GetAllEnvironmentsOfApplication(
-    applicationEnvironmentDatastore: applicationEnvironmentDatastore,
-    applicationDatastore: applicationDatastore,
-    authenticationService: authenticationService,
+    applicationEnvironmentUsecase: applicationEnvironmentUsecase,
+    authenticationUsecase: authenticationUsecase,
   );
   final getAllRevisionsOfApplication = new GetAllRevisionsOfApplication(
-    applicationDatastore: applicationDatastore,
-    applicationRevisionDatastore: applicationRevisionDatastore,
-    authenticationService: authenticationService,
+    applicationRevisionUsecase: applicationRevisionUsecase,
+    authenticationUsecase: authenticationUsecase,
   );
   final getApplication = new GetApplication(
-    applicationDatastore: applicationDatastore,
-    authenticationService: authenticationService,
+    applicationUsecase: applicationUsecase,
+    authenticationUsecase: authenticationUsecase,
   );
   final getApplicationEnvironment = new GetApplicationEnvironment(
-    applicationEnvironmentDatastore: applicationEnvironmentDatastore,
-    applicationDatastore: applicationDatastore,
-    authenticationService: authenticationService,
+    applicationEnvironmentUsecase: applicationEnvironmentUsecase,
+    authenticationUsecase: authenticationUsecase,
   );
-  final getMe = new GetMe(authenticationService: authenticationService);
-  final revokeSession = new RevokeSession(sessionDatastore: sessionDatastore);
+  final getMe = new GetMe(authenticationUsecase: authenticationUsecase);
+  final revokeSession = new RevokeSession(authenticationUsecase: authenticationUsecase);
+  final signIn = new SignIn(githubOauthClientId: githubOauthClientId);
+  final signInCallback = new SignInCallback(authenticationUsecase: authenticationUsecase);
 
   router
     ..serve(new UrlPattern(r'/sessions'), method: 'GET')
-      .listen(authenticate)
+      .listen(signIn)
     ..serve(new UrlPattern(r'/sessions/callback'), method: 'GET')
-      .listen(authenticateCallback)
+      .listen(signInCallback)
     ..serve(new UrlPattern(r'/sessions/([a-f0-9]{64})'), method: 'DELETE')
       .listen(revokeSession)
     ..serve(new UrlPattern(r'/users/me'), method: 'GET')
@@ -139,5 +154,5 @@ Future<dynamic> startHttpServer({
     ..serve(new UrlPattern(r'/applications/([0-9]+)/revisions'), method: 'POST')
       .listen(createApplicationRevision);
   
-  await postgresConnectionPool.start();
+  await postgresqlConnectionPool.start();
 }

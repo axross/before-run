@@ -1,37 +1,39 @@
+import 'dart:io' show HttpRequest;
 import 'package:meta/meta.dart';
-import '../persistent/application_datastore.dart';
-import '../persistent/application_revision_datastore.dart';
-import '../service/authentication_service.dart';
-import './src/request_handler.dart';
+import '../usecase/application_revision_usecase.dart';
+import '../usecase/authentication_usecase.dart';
 import './src/serialize.dart';
+import './src/respond_in_zone.dart';
+import './src/extract_session_token.dart';
 
-class GetAllRevisionsOfApplication extends RequestHandler {
-  final ApplicationRevisionDatastore _applicationRevisionDatastore;
-  final ApplicationDatastore _applicationDatastore;
-  final AuthenticationService _authenticationService;
+class GetAllRevisionsOfApplication {
+  final ApplicationRevisionUsecase _applicationRevisionUsecase;
+  final AuthenticationUsecase _authenticationUsecase;
 
   void call(HttpRequest request) {
-    handle(request, () async {
+    respondInZone(request, () async {
       final applicationId = _extractApplicationId(request.uri);
-      final user = await _authenticationService.authenticate(request);
-      
-      // check permission to browse an application
-      final application = await _applicationDatastore.getApplication(id: applicationId, requester: user);
-
-      final revisions = await _applicationRevisionDatastore.getAllRevisions(application: application);
+      final user = await _authenticationUsecase.authenticate(extractSessionToken(request.headers));
+      final revisions = await _applicationRevisionUsecase.getAllByApplicationId(
+        applicationId: applicationId,
+        requester: user,
+      );
 
       return revisions.map((revision) => serializeApplicationRevision(revision)).toList();
+    }, {
+      AuthenticationException: 401,
+      NoAutorizationException: 401,
+      ApplicationForbiddenException: 403,
+      ApplicationNotFoundException: 404,
     });
   }
 
   GetAllRevisionsOfApplication({
-    @required ApplicationRevisionDatastore applicationRevisionDatastore,
-    @required ApplicationDatastore applicationDatastore,
-    @required AuthenticationService authenticationService,
+    @required ApplicationRevisionUsecase applicationRevisionUsecase,
+    @required AuthenticationUsecase authenticationUsecase,
   }):
-    _applicationRevisionDatastore = applicationRevisionDatastore,
-    _applicationDatastore = applicationDatastore,
-    _authenticationService = authenticationService;
+    _applicationRevisionUsecase = applicationRevisionUsecase,
+    _authenticationUsecase = authenticationUsecase;
 }
 
 int _extractApplicationId(Uri url) =>

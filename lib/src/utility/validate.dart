@@ -1,6 +1,4 @@
 import 'package:matcher/matcher.dart';
-import '../request_exception.dart';
-
 export 'package:matcher/matcher.dart';
 
 final RegExp _emailRegExp = new RegExp(
@@ -8,7 +6,7 @@ final RegExp _emailRegExp = new RegExp(
 final RegExp _urlRegExp = new RegExp(
     r'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)');
 
-class ValidationException extends BadRequestException {
+class ValidationException implements Exception {
   final String message;
 
   String toString() => message;

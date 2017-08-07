@@ -4,10 +4,9 @@ import 'package:http/http.dart' show Request;
 import 'package:meta/meta.dart';
 import 'package:xml/xml.dart' as xml;
 import '../entity/uuid.dart';
-import './src/aws_client.dart';
-import './src/resource_exception.dart';
+import './src/send_aws_http_request.dart';
 
-class AwsCloudfrontClient extends AwsClient {
+class AwsCloudfrontClient {
   // a host and region of cloudfront is fixed
   static const host = 'cloudfront.amazonaws.com';
   static const region = 'us-east-1';
@@ -16,7 +15,7 @@ class AwsCloudfrontClient extends AwsClient {
   Future<AwsCloudfrontDistribution> getDistribution({@required String distributionId, @required accessKeyId, @required secretAccessKey}) async {
     final request = new Request('GET', new Uri.https(host, '/2016-09-29/distribution/$distributionId'));
     final requestId = new Uuid.v4();
-    final response = await sendRequest(
+    final response = await sendAwsHttpRequest(
       request,
       region: region,
       serviceName: serviceName,
@@ -25,16 +24,9 @@ class AwsCloudfrontClient extends AwsClient {
       requestId: requestId,
     );
     final responseBody = await UTF8.decodeStream(response.stream);
-
-    if (response.statusCode == 404) {
-      throw new AwsCloudfrontDistributionNotFound(
-        distributionId: distributionId,
-        accessKeyId: accessKeyId,
-        secretAccessKey: secretAccessKey,
-      );
-    }
-
     final parsedXml = xml.parse(responseBody);
+
+    // todo: validation
 
     return new AwsCloudfrontDistribution(
       distributionId: parsedXml.findElements('Distribution').single.findElements('Id').single.text,
@@ -52,4 +44,14 @@ class AwsCloudfrontDistribution {
   final String domainName;
 
   AwsCloudfrontDistribution({@required this.distributionId, @required this.arn, @required this.domainName});
+}
+
+class AwsCloudfrontDistributionNotFound implements Exception {
+  final String distributionId;
+  final String accessKeyId;
+  final String secretAccessKey;
+
+  String toString() => 'An AWS CloudFront distribution (id: "$distributionId") cannot be browsed with pair of access keys.';
+
+  AwsCloudfrontDistributionNotFound({@required this.distributionId, @required this.accessKeyId, @required this.secretAccessKey});
 }

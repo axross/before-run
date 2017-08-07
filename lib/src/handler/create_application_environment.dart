@@ -1,47 +1,134 @@
+import 'dart:io' show HttpRequest;
 import 'package:meta/meta.dart';
-import '../persistent/application_environment_datastore.dart';
-import '../persistent/application_datastore.dart';
-import '../service/authentication_service.dart';
+import '../entity/application_bucket.dart';
+import '../entity/application_destination.dart';
+import '../usecase/application_environment_usecase.dart';
+import '../usecase/authentication_usecase.dart';
 import '../utility/validate.dart';
-import './src/request_handler.dart';
+import './src/extract_session_token.dart';
+import './src/parse_payload_as_json.dart';
+import './src/respond_in_zone.dart';
 import './src/serialize.dart';
 
-class CreateApplicationEnvironment extends RequestHandler {
-  final ApplicationEnvironmentDatastore _applicationEnvironmentDatastore;
-  final ApplicationDatastore _applicationDatastore;
-  final AuthenticationService _authenticationService;
+class CreateApplicationEnvironment {
+  final ApplicationEnvironmentUsecase _applicationEnvironmentUsecase;
+  final AuthenticationUsecase _authenticationUsecase;
 
   void call(HttpRequest request) {
-    handle(request, () async {
+    respondInZone(request, () async {
       final applicationId = _extractApplicationId(request.uri);
-      final payload = await getPayloadAsJson(request);
+      final user = await _authenticationUsecase.authenticate(extractSessionToken(request.headers));
 
-      _validatePayloadForCreate(payload);
+      final payload = await parsePayloadAsJson(request);
+      final name = _extractNameFromPayload(payload);
+      final payloadForBucket = _extractPayloadForBucket(payload);
+      final payloadForDestination = _extractPayloadForDestination(payload);
 
-      final String name = payload['name'];
-      final user = await _authenticationService.authenticate(request);
-
-      // check permission to browse an application
-      final application = await _applicationDatastore.getApplication(id: applicationId, requester: user);
-
-      final environment = await _applicationEnvironmentDatastore.createEnvironment(name: name, application: application, requester: user);
+      final environment = await _applicationEnvironmentUsecase.create(
+        applicationId: applicationId,
+        name: name,
+        bucketType: payloadForBucket.type,
+        bucketName: payloadForBucket.bucketName,
+        bucketRegion: payloadForBucket.region,
+        bucketAccessKeyId: payloadForBucket.accessKeyId,
+        bucketSecretAccessKey: payloadForBucket.secretAccessKey,
+        destinationType: payloadForDestination.type,
+        destinationDistributionId: payloadForDestination.distributionId,
+        destinationAccessKeyId: payloadForDestination.accessKeyId,
+        destinationSecretAccessKey: payloadForDestination.secretAccessKey,
+        requester: user,
+      );
 
       return serializeApplicationEnvironment(environment);
-    }, statusCode: 201);
+    }, {
+      InvalidHttpRequestException: 400,
+      ValidationException: 400,
+      AuthenticationException: 401,
+      NoAutorizationException: 401,
+      UserNotFoundException: 404,
+      ApplicationEnvironmentConflictException: 409,
+    }, 201);
   }
   
   CreateApplicationEnvironment({
-    @required ApplicationEnvironmentDatastore applicationEnvironmentDatastore,
-    @required ApplicationDatastore applicationDatastore,
-    @required AuthenticationService authenticationService,
+    @required ApplicationEnvironmentUsecase applicationEnvironmentUsecase,
+    @required AuthenticationUsecase authenticationUsecase,
   }):
-    _applicationEnvironmentDatastore = applicationEnvironmentDatastore,
-    _applicationDatastore = applicationDatastore,
-    _authenticationService = authenticationService;
+    _applicationEnvironmentUsecase = applicationEnvironmentUsecase,
+    _authenticationUsecase = authenticationUsecase;
 }
 
-void _validatePayloadForCreate(Map<dynamic, dynamic> value) =>
-  validate(value, containsPair('name', allOf(isNotNull, matches(new RegExp(r'^[a-z0-9_\-]{1,100}$')))));
-
 int _extractApplicationId(Uri url) =>
-  int.parse(new RegExp(r'applications/([0-9]+)').firstMatch('$url').group(1), radix: 10);
+  int.parse(new RegExp(r'applications/([0-9]+)').firstMatch('$url').group(1));
+
+String _extractNameFromPayload(Map<String, dynamic> payload) {
+  validate(payload, containsPair('name', allOf(isNotNull, matches(new RegExp(r'^[a-z0-9_\-]{1,100}$')))));
+
+  return payload['name'];
+}
+
+_PayloadForBucket _extractPayloadForBucket(Map<String, dynamic> payload) {
+  validate(payload, containsPair('bucket', allOf(
+    isNotNull,
+    containsPair('type', equals('AWS_S3')),
+    containsPair('bucketName', isValidString),
+    containsPair('region', isValidString),
+    containsPair('accessKeyId', isValidString),
+    containsPair('secretAccessKey', isValidString),
+  )));
+
+  return new _PayloadForBucket(
+    type: ApplicationBucketType.AwsS3,
+    bucketName: payload['bucket']['bucketName'],
+    region: payload['bucket']['region'],
+    accessKeyId: payload['bucket']['accessKeyId'],
+    secretAccessKey: payload['bucket']['secretAccessKey'],
+  );
+}
+
+_PayloadForDestination _extractPayloadForDestination(Map<String, dynamic> payload) {
+  validate(payload, containsPair('destination', allOf(
+    isNotNull,
+    containsPair('type', equals('AWS_CLOUDFRONT')),
+    containsPair('distributionId', isValidString),
+    containsPair('accessKeyId', isValidString),
+    containsPair('secretAccessKey', isValidString),
+  )));
+
+  return new _PayloadForDestination(
+    type: ApplicationDestinationType.AwsCloudfront,
+    distributionId: payload['destination']['distributionId'],
+    accessKeyId: payload['destination']['accessKeyId'],
+    secretAccessKey: payload['destination']['secretAccessKey'],
+  );
+}
+
+class _PayloadForBucket {
+  final ApplicationBucketType type;
+  final String bucketName;
+  final String region;
+  final String accessKeyId;
+  final String secretAccessKey;
+
+  _PayloadForBucket({
+    @required ApplicationBucketType this.type,
+    @required String this.bucketName,
+    @required String this.region,
+    @required String this.accessKeyId,
+    @required String this.secretAccessKey,
+  });
+}
+
+class _PayloadForDestination {
+  final ApplicationDestinationType type;
+  final String distributionId;
+  final String accessKeyId;
+  final String secretAccessKey;
+
+  _PayloadForDestination({
+    @required ApplicationDestinationType this.type,
+    @required String this.distributionId,
+    @required String this.accessKeyId,
+    @required String this.secretAccessKey,
+  });
+}

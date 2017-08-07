@@ -11,6 +11,8 @@ Map<String, dynamic> serializeApplication(Application application) => {
 Map<String, dynamic> serializeApplicationEnvironment(ApplicationEnvironment environment) => {
   'id': environment.id,
   'name': environment.name,
+  'bucketId': environment.bucketId,
+  'destinationId': environment.destinationId,
 };
 
 Map<String, dynamic> serializeApplicationRevision(ApplicationRevision revision) => {

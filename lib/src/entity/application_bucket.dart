@@ -14,6 +14,13 @@ abstract class ApplicationBucketType {
   String toJson();
 
   factory ApplicationBucketType._(String value) => new _ApplicationBucketType(value);
+  factory ApplicationBucketType.fromString(String value) {
+    if (value == ApplicationBucketType.AwsS3) {
+      return ApplicationBucketType.AwsS3;
+    } else {
+      throw new TypeError();
+    }
+  }
 }
 
 class _ApplicationBucketType implements ApplicationBucketType {

@@ -1,37 +1,37 @@
+import 'dart:io' show HttpRequest;
 import 'package:meta/meta.dart';
-import '../persistent/application_environment_datastore.dart';
-import '../persistent/application_datastore.dart';
-import '../service/authentication_service.dart';
-import './src/request_handler.dart';
+import '../usecase/application_environment_usecase.dart';
+import '../usecase/authentication_usecase.dart';
+import './src/extract_session_token.dart';
+import './src/respond_in_zone.dart';
 import './src/serialize.dart';
 
-class GetAllEnvironmentsOfApplication extends RequestHandler {
-  final ApplicationEnvironmentDatastore _applicationEnvironmentDatastore;
-  final ApplicationDatastore _applicationDatastore;
-  final AuthenticationService _authenticationService;
+class GetAllEnvironmentsOfApplication {
+  final ApplicationEnvironmentUsecase _applicationEnvironmentUsecase;
+  final AuthenticationUsecase _authenticationUsecase;
 
   void call(HttpRequest request) {
-    handle(request, () async {
+    respondInZone(request, () async {
       final applicationId = _extractApplicationId(request.uri);
-      final user = await _authenticationService.authenticate(request);
-      
-      // check permission to browse an application
-      final application = await _applicationDatastore.getApplication(id: applicationId, requester: user);
-
-      final environments = await _applicationEnvironmentDatastore.getAllEnvironments(application: application);
+      final user = await _authenticationUsecase.authenticate(extractSessionToken(request.headers));
+      final environments = await _applicationEnvironmentUsecase.getAllByApplicationId(
+        applicationId: applicationId,
+        requester: user,
+      );
 
       return environments.map((environment) => serializeApplicationEnvironment(environment)).toList();
+    }, {
+      AuthenticationException: 401,
+      NoAutorizationException: 401,
     });
   }
 
   GetAllEnvironmentsOfApplication({
-    @required ApplicationEnvironmentDatastore applicationEnvironmentDatastore,
-    @required ApplicationDatastore applicationDatastore,
-    @required AuthenticationService authenticationService,
+    @required ApplicationEnvironmentUsecase applicationEnvironmentUsecase,
+    @required AuthenticationUsecase authenticationUsecase,
   }):
-    _applicationEnvironmentDatastore = applicationEnvironmentDatastore,
-    _applicationDatastore = applicationDatastore,
-    _authenticationService = authenticationService;
+    _applicationEnvironmentUsecase = applicationEnvironmentUsecase,
+    _authenticationUsecase = authenticationUsecase;
 }
 
 int _extractApplicationId(Uri url) =>
