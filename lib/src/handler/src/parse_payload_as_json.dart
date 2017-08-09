@@ -3,7 +3,7 @@ import 'dart:convert' show JsonUnsupportedObjectError, JSON, UTF8;
 import 'dart:io' show ContentType, HttpRequest;
 import 'package:meta/meta.dart';
 
-Future<Map> parsePayloadAsJson(HttpRequest request) async {
+Future<Map<String, dynamic>> parsePayloadAsJson(HttpRequest request) async {
   if (request.headers.contentType == null ||
       request.headers.contentType.mimeType != (ContentType.JSON as ContentType).mimeType) {
     throw new InvalidHttpRequestException(request, message: 'This API requires a request as application/json.');

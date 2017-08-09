@@ -40,5 +40,5 @@ class CreateApplication {
     _authenticationUsecase = authenticationUsecase;
 }
 
-void _validate(Map<dynamic, dynamic> value) =>
-  validate(value, containsPair('name', allOf(isNotNull, matches(new RegExp(r'^[a-z0-9_\-]{1,100}$')))));
+void _validate(Map<String, dynamic> payload) =>
+  validate(payload, containsPair('name', allOf(isNotNull, matches(new RegExp(r'^[a-z0-9_\-]{1,100}$')))));

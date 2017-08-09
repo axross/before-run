@@ -1,10 +1,9 @@
 import 'package:matcher/matcher.dart';
 export 'package:matcher/matcher.dart';
 
-final RegExp _emailRegExp = new RegExp(
-    r"^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$");
-final RegExp _urlRegExp = new RegExp(
-    r'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)');
+final RegExp _emailRegExp = new RegExp(r"^[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$");
+final RegExp _urlRegExp = new RegExp(r'https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)');
+final RegExp _uuidRegExp = new RegExp(r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}');
 
 class ValidationException implements Exception {
   final String message;
@@ -35,5 +34,10 @@ Matcher isEmail = predicate(
 
 Matcher isUrl = predicate(
   (dynamic value) => value is String && _urlRegExp.hasMatch(value),
-  'a valid e-mail',
+  'a valid URL',
+);
+
+Matcher isUuid = predicate(
+  (dynamic value) => value is String && _urlRegExp.hasMatch(value),
+  'a valid UUID',
 );
