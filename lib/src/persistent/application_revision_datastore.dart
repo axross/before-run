@@ -8,7 +8,7 @@ import '../entity/uuid.dart';
 import './src/deserialize.dart';
 
 class ApplicationRevisionDatastore {
-  Future<Iterable<ApplicationRevision>> getAll(Connection connection, {@required Application application}) async {
+  Future<Iterable<ApplicationRevision>> getAllOfApplication(Connection connection, {@required Application application}) async {
     final rows = await connection.query('select id, application_id, creator_id, created_at from application_revisions where application_id = @applicationId;', {
       'applicationId': application.id,
     });

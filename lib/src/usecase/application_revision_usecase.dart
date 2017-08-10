@@ -26,7 +26,7 @@ class ApplicationRevisionUsecase {
     try {
       final application = await _applicationDatastore.getById(connection, id: applicationId, requester: requester);
 
-      return await _applicationRevisionDatastore.getAll(connection, application: application);
+      return await _applicationRevisionDatastore.getAllOfApplication(connection, application: application);
     } finally {
       connection.close();
     }
