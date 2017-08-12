@@ -40,6 +40,14 @@ class ApplicationRevisionDatastore {
   }
 }
 
+class ApplicationRevisionNotFoundException implements Exception {
+  final Uuid id;
+
+  String toString() => 'An application revision (id: "$id") is not found.';
+
+  ApplicationRevisionNotFoundException({@required this.id});
+}
+
 class ApplicationRevisionCreationFailureException implements Exception {
   final int applicationId;
   final User requester;
