@@ -1,4 +1,5 @@
 import 'dart:async' show Future, Stream;
+import 'package:archive/archive.dart';
 import 'package:gcloud/storage.dart' show ObjectMetadata, Storage;
 import 'package:googleapis_auth/auth_io.dart' show clientViaServiceAccount, ServiceAccountCredentials;
 import 'package:http/http.dart' show Client;
@@ -7,6 +8,16 @@ import '../entity/application_revision.dart';
 
 class ApplicationRevisionFileStorage {
   final Storage _storage;
+
+  Future<dynamic> getRevisionFile(ApplicationRevision revision) async {
+    final bytes = await _storage.bucket('before-run-revisions').read('${revision.id}').single;
+
+    print(bytes);
+    
+    final archive = new ZipDecoder().decodeBytes(bytes);
+
+    print(archive.files.length);
+  }
 
   Future<dynamic> saveRevisionFile(ApplicationRevision revision, Stream<List<int>> stream) =>
     stream
